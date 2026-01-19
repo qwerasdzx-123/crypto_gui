@@ -1,5 +1,6 @@
 import base64
 import re
+import subprocess
 from typing import Tuple, List
 
 
@@ -8,6 +9,9 @@ class MiscEncoding:
     XXENCODE_PADDING = '+'
     
     UUENCODE_CHARS = '`!"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_'
+    
+    BUBBLE_VOWELS = 'aeiouy'
+    BUBBLE_CONSONANTS = 'bcdfghklmnprstvzx'
     
     @staticmethod
     def xxencode_encode(text: str) -> str:
@@ -97,7 +101,7 @@ class MiscEncoding:
     @staticmethod
     def jsfuck_encode(text: str) -> str:
         jsfuck_map = {
-            'a': '(false+"")[1]',
+            'a': '(![]+[])[+!+[]]',
             'b': '([]["entries"]()+"")[2]',
             'c': '([]["fill"]+"")[3]',
             'd': '(undefined+"")[2]',
@@ -124,7 +128,7 @@ class MiscEncoding:
             'y': '(NaN+[11])[0]',
             'z': '(+(35))["to"+String["name"]](36)[1]',
             '0': '(+[![]]+[][(![]+[])[+[]]+([![]]+[][[]])[+!+[]+[+[]]]+(![]+[])[!+[]+!+[]]+(!![]+[])[+[]]+(!![]+[])[!+[]+!+[]+!+[]]+(!![]+[])[+!+[]]])[+!+[]+[+[]]]',
-            '1': '(+!+[]+[+[]]+[+!+[]])',
+            '1': '[+!+[]]+[]',
             '2': '(+!+[]+[+!+[]])',
             '3': '(+!+[]+[+!+[]]+[+!+[]])',
             '4': '(+!+[]+[+!+[]]+[+!+[]]+[+!+[]])',
@@ -179,7 +183,19 @@ class MiscEncoding:
     
     @staticmethod
     def jsfuck_decode(code: str) -> str:
-        raise NotImplementedError("JSfuck decoding is not supported due to its complexity")
+        try:
+            js_code = f'console.log(String({code}));'
+            result = subprocess.run(['node', '-e', js_code], capture_output=True, text=True, timeout=10)
+            if result.returncode == 0:
+                return result.stdout.strip()
+            else:
+                raise RuntimeError(f"JSFuck解码失败: {result.stderr}")
+        except FileNotFoundError:
+            raise RuntimeError("JSFuck解码需要Node.js环境，请确保已安装Node.js")
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("JSFuck解码超时，代码可能过于复杂")
+        except Exception as e:
+            raise RuntimeError(f"JSFuck解码错误: {str(e)}")
     
     @staticmethod
     def brainfuck_encode(text: str) -> str:
@@ -246,12 +262,114 @@ class MiscEncoding:
     
     @staticmethod
     def bubble_encode(text: str) -> str:
-        bubble_map = {
-            'A': '(ﾟДﾟ)≡ﾟωﾟノ',
-            'B': '(ﾟДﾟ)≡ﾟΘﾟ',
-            'C': '(ﾟДﾟ)≡ﾟΘﾟ≡ﾟДﾟ)',
-            'D': '(ﾟДﾟ)≡ﾟΘﾟ≡ﾟДﾟ≡ﾟДﾟ)',
-            'E': '(ﾟДﾟ)≡ﾟΘﾟ≡ﾟДﾟ≡ﾟДﾟ≡ﾟДﾟ)',
+        vowels = 'aeiouy'
+        consonants = 'bcdfghklmnprstvzx'
+        
+        data = text.encode('utf-8')
+        
+        out = 'x'
+        c = 1
+        
+        for i in range(0, len(data) + 1, 2):
+            if i >= len(data):
+                out += vowels[c % 6] + consonants[16] + vowels[c // 6]
+                break
+            
+            byte1 = data[i]
+            out += vowels[(((byte1 >> 6) & 3) + c) % 6]
+            out += consonants[(byte1 >> 2) & 15]
+            out += vowels[((byte1 & 3) + (c // 6)) % 6]
+            
+            if (i + 1) >= len(data):
+                break
+            
+            byte2 = data[i + 1]
+            out += consonants[(byte2 >> 4) & 15]
+            out += '-'
+            out += consonants[byte2 & 15]
+            c = (c * 5 + byte1 * 7 + byte2) % 36
+        
+        out += 'x'
+        return out
+    
+    @staticmethod
+    def bubble_decode(code: str) -> str:
+        vowels = 'aeiouy'
+        consonants = 'bcdfghklmnprstvzx'
+        
+        c = 1
+        
+        if len(code) < 2 or code[0] != 'x':
+            raise ValueError("corrupt string at offset 0: must begin with a 'x'")
+        
+        if code[-1] != 'x':
+            raise ValueError("corrupt string at last offset: must end with a 'x'")
+        
+        if len(code) != 5 and len(code) % 6 != 5:
+            raise ValueError("corrupt string: wrong length")
+        
+        src = code[1:-1]
+        src = list(enumerate([src[x:x+6] for x in range(0, len(src), 6)]))
+        last_tuple = len(src) - 1
+        out = bytearray()
+        
+        for k, tup in src:
+            pos = k * 6
+            
+            try:
+                decoded = [vowels.index(tup[0]), consonants.index(tup[1]), vowels.index(tup[2])]
+                try:
+                    decoded.append(consonants.index(tup[3]))
+                    decoded.append('-')
+                    decoded.append(consonants.index(tup[5]))
+                except:
+                    pass
+            except ValueError as e:
+                raise ValueError(f"corrupt string at offset {pos}: invalid character")
+            
+            if k == last_tuple:
+                if decoded[1] == 16:
+                    if decoded[0] != c % 6:
+                        raise ValueError(f"corrupt string at offset {pos} (checksum)")
+                    if decoded[2] != c // 6:
+                        raise ValueError(f"corrupt string at offset {pos+2} (checksum)")
+                else:
+                    byte = MiscEncoding._decode_3way_byte(decoded[0], decoded[1], decoded[2], pos, c)
+                    out.append(byte)
+            else:
+                byte1 = MiscEncoding._decode_3way_byte(decoded[0], decoded[1], decoded[2], pos, c)
+                byte2 = MiscEncoding._decode_2way_byte(decoded[3], decoded[5], pos)
+                out.append(byte1)
+                out.append(byte2)
+                c = (c * 5 + byte1 * 7 + byte2) % 36
+        
+        return out.decode('utf-8')
+    
+    @staticmethod
+    def _decode_2way_byte(a1, a2, offset):
+        if a1 > 16:
+            raise ValueError(f"corrupt string at offset {offset}")
+        if a2 > 16:
+            raise ValueError(f"corrupt string at offset {offset+2}")
+        return (a1 << 4) | a2
+    
+    @staticmethod
+    def _decode_3way_byte(a1, a2, a3, offset, c):
+        high2 = (a1 - (c % 6) + 6) % 6
+        if high2 >= 4:
+            raise ValueError(f"corrupt string at offset {offset}")
+        if a2 > 16:
+            raise ValueError(f"corrupt string at offset {offset+1}")
+        mid4 = a2
+        low2 = (a3 - (c // 6 % 6) + 6) % 6
+        if low2 >= 4:
+            raise ValueError(f"corrupt string at offset {offset+2}")
+        return (high2 << 6) | (mid4 << 2) | low2
+    
+    @staticmethod
+    def aaencode_encode(text: str) -> str:
+        aaencode_map = {
+            'A': 'ﾟωﾟﾉ',
             'F': '(ﾟДﾟ)≡ﾟΘﾟ≡ﾟДﾟ≡ﾟДﾟ≡ﾟДﾟ≡ﾟДﾟ)',
             'G': '(ﾟДﾟ)≡ﾟΘﾟ≡ﾟДﾟ≡ﾟДﾟ≡ﾟДﾟ≡ﾟДﾟ≡ﾟДﾟ)',
             'H': '(ﾟДﾟ)≡ﾟΘﾟ≡ﾟДﾟ≡ﾟДﾟ≡ﾟДﾟ≡ﾟДﾟ≡ﾟДﾟ≡ﾟДﾟ)',
@@ -346,16 +464,12 @@ class MiscEncoding:
         
         result = []
         for char in text:
-            if char in bubble_map:
-                result.append(bubble_map[char])
+            if char in aaencode_map:
+                result.append(aaencode_map[char])
             else:
                 result.append(f'"{char}"')
         
         return ''.join(result)
-    
-    @staticmethod
-    def bubble_decode(code: str) -> str:
-        raise NotImplementedError("Bubble decoding is not supported due to its complexity")
     
     @staticmethod
     def aaencode_encode(text: str) -> str:

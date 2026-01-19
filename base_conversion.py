@@ -28,9 +28,28 @@ class BaseConversion:
     
     @staticmethod
     def decimal_to_text(decimal: str) -> str:
-        decimal = decimal.replace(' ', '')
-        bytes_list = [decimal[i:i+3] for i in range(0, len(decimal), 3)]
-        return ''.join(chr(int(byte)) for byte in bytes_list if byte)
+        decimal = decimal.strip()
+        if not decimal:
+            return ""
+        
+        # 支持空格或逗号分隔的数字
+        import re
+        numbers = re.split(r'[,\s]+', decimal)
+        result = []
+        
+        for num_str in numbers:
+            if not num_str:  # 跳过空字符串
+                continue
+            try:
+                num = int(num_str)
+                if 0 <= num <= 127:  # ASCII范围
+                    result.append(chr(num))
+                else:
+                    result.append(f"[{num}]")  # 超出ASCII范围的数字标记
+            except ValueError:
+                result.append(f"[{num_str}]")  # 无效数字标记
+        
+        return ''.join(result)
     
     @staticmethod
     def text_to_hexadecimal(text: str) -> str:

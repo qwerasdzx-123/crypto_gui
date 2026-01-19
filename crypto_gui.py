@@ -2,43 +2,256 @@
 # -*- coding: utf-8 -*-
 
 import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox
+from tkinter import ttk, scrolledtext, messagebox, font, filedialog
 from crypto_tool import CryptoTool
 import threading
+import webbrowser
 
 
-class MacOSStyle:
+class ThemeManager:
     def __init__(self):
-        self.colors = {
-            'background': '#f5f5f7',
-            'card': '#ffffff',
-            'card_border': '#e0e0e0',
-            'text': '#1d1d1f',
-            'text_secondary': '#86868b',
-            'accent': '#007aff',
-            'accent_hover': '#0051d5',
-            'success': '#34c759',
-            'warning': '#ff9500',
-            'error': '#ff3b30',
-            'border': '#d2d2d7'
+        self.current_theme = 'light'
+        
+        self.themes = {
+            'light': {
+                'background': '#f5f5f7',
+                'surface': '#ffffff',
+                'surface_hover': '#fafafa',
+                'text': '#1d1d1f',
+                'text_secondary': '#86868b',
+                'text_disabled': '#c7c7cc',
+                'primary': '#007aff',
+                'primary_hover': '#0051d5',
+                'primary_light': '#e3f2fd',
+                'success': '#34c759',
+                'warning': '#ff9500',
+                'error': '#ff3b30',
+                'border': '#d2d2d7',
+                'border_light': '#e5e5ea',
+                'divider': '#e5e5ea',
+                'shadow': 'rgba(0, 0, 0, 0.08)',
+                'card': '#ffffff',
+                'card_border': '#e0e0e0',
+                'input_bg': '#ffffff',
+                'input_border': '#d2d2d7',
+                'input_focus': '#007aff',
+                'scrollbar': '#c7c7cc',
+                'scrollbar_hover': '#86868b'
+            },
+            'dark': {
+                'background': '#1c1c1e',
+                'surface': '#2c2c2e',
+                'surface_hover': '#3a3a3c',
+                'text': '#f5f5f7',
+                'text_secondary': '#98989d',
+                'text_disabled': '#48484a',
+                'primary': '#0a84ff',
+                'primary_hover': '#0051d5',
+                'primary_light': '#1c1c1e',
+                'success': '#30d158',
+                'warning': '#ff9f0a',
+                'error': '#ff453a',
+                'border': '#48484a',
+                'border_light': '#3a3a3c',
+                'divider': '#3a3a3c',
+                'shadow': 'rgba(0, 0, 0, 0.3)',
+                'card': '#2c2c2e',
+                'card_border': '#3a3a3c',
+                'input_bg': '#1c1c1e',
+                'input_border': '#48484a',
+                'input_focus': '#0a84ff',
+                'scrollbar': '#48484a',
+                'scrollbar_hover': '#636366'
+            }
         }
+        
         self.fonts = {
-            'title': ('SF Pro Display', 20, 'bold'),
-            'heading': ('SF Pro Display', 14, 'bold'),
-            'body': ('SF Pro Text', 12),
-            'small': ('SF Pro Text', 10),
-            'code': ('Menlo', 11)
+            'title': ('Segoe UI', 22, 'bold'),
+            'heading': ('Segoe UI', 15, 'bold'),
+            'subheading': ('Segoe UI', 13, 'bold'),
+            'body': ('Segoe UI', 12),
+            'body_bold': ('Segoe UI', 12, 'bold'),
+            'small': ('Segoe UI', 10),
+            'code': ('Consolas', 11)
         }
+    
+    def get_color(self, name):
+        return self.themes[self.current_theme][name]
+    
+    def get_font(self, name):
+        return self.fonts[name]
+    
+    def toggle_theme(self):
+        self.current_theme = 'dark' if self.current_theme == 'light' else 'light'
+        return self.current_theme
+
+
+class ErrorDialog:
+    def __init__(self, parent, title, message, suggestion=None, error_type='error'):
+        self.dialog = tk.Toplevel(parent)
+        self.dialog.title(title)
+        self.dialog.geometry("500x350")
+        self.dialog.resizable(False, False)
+        
+        self.theme_manager = parent.theme_manager if hasattr(parent, 'theme_manager') else ThemeManager()
+        
+        bg = self.theme_manager.get_color('background')
+        card = self.theme_manager.get_color('card')
+        text = self.theme_manager.get_color('text')
+        text_secondary = self.theme_manager.get_color('text_secondary')
+        error_color = self.theme_manager.get_color('error')
+        
+        self.dialog.configure(bg=bg)
+        
+        main_frame = tk.Frame(self.dialog, bg=bg)
+        main_frame.pack(fill='both', expand=True, padx=30, pady=30)
+        
+        icon_frame = tk.Frame(main_frame, bg=card)
+        icon_frame.pack(pady=(0, 15))
+        
+        icon_text = '❌' if error_type == 'error' else '⚠️' if error_type == 'warning' else '✅'
+        tk.Label(icon_frame, text=icon_text, font=('Arial', 48), bg=card).pack()
+        
+        title_label = tk.Label(
+            main_frame,
+            text=title,
+            font=self.theme_manager.get_font('heading'),
+            fg=text,
+            bg=bg
+        )
+        title_label.pack(pady=(0, 15))
+        
+        msg_frame = tk.Frame(main_frame, bg=card)
+        msg_frame.pack(fill='x', pady=(0, 10))
+        
+        msg_label = tk.Label(
+            msg_frame,
+            text=message,
+            font=self.theme_manager.get_font('body'),
+            fg=text,
+            bg=card,
+            wraplength=440,
+            justify='left'
+        )
+        msg_label.pack(anchor='w', padx=10, pady=10)
+        
+        if suggestion:
+            suggestion_frame = tk.Frame(main_frame, bg=card)
+            suggestion_frame.pack(fill='x', pady=(0, 20))
+            
+            tk.Label(
+                suggestion_frame,
+                text="💡 建议:",
+                font=self.theme_manager.get_font('body_bold'),
+                fg=text,
+                bg=card
+            ).pack(anchor='w', padx=10, pady=(10, 5))
+            
+            tk.Label(
+                suggestion_frame,
+                text=suggestion,
+                font=self.theme_manager.get_font('body'),
+                fg=text_secondary,
+                bg=card,
+                wraplength=440,
+                justify='left'
+            ).pack(anchor='w', padx=10, pady=(0, 10))
+        
+        button_frame = tk.Frame(main_frame, bg=bg)
+        button_frame.pack(fill='x')
+        
+        tk.Button(
+            button_frame,
+            text="确定",
+            command=self.dialog.destroy,
+            font=self.theme_manager.get_font('body_bold'),
+            bg=self.theme_manager.get_color('primary'),
+            fg='white',
+            relief='flat',
+            padx=30,
+            pady=10,
+            cursor='hand2'
+        ).pack(side='right')
+        
+        self.dialog.transient(parent)
+        self.dialog.grab_set()
+        self.dialog.focus_set()
+
+
+class ModernButton(tk.Canvas):
+    def __init__(self, parent, text, command=None, style='primary', **kwargs):
+        self.theme_manager = kwargs.pop('theme_manager', None)
+        super().__init__(parent, **kwargs)
+        
+        self.text = text
+        self.command = command
+        self.style = style
+        self.hover = False
+        self.pressed = False
+        
+        self.bind('<Enter>', self.on_enter)
+        self.bind('<Leave>', self.on_leave)
+        self.bind('<Button-1>', self.on_press)
+        self.bind('<ButtonRelease-1>', self.on_release)
+        
+        self.draw()
+    
+    def draw(self):
+        self.delete('all')
+        
+        if self.theme_manager:
+            if self.style == 'primary':
+                bg = self.theme_manager.get_color('primary_hover') if self.hover else self.theme_manager.get_color('primary')
+                fg = '#ffffff'
+            elif self.style == 'secondary':
+                bg = self.theme_manager.get_color('surface_hover') if self.hover else self.theme_manager.get_color('surface')
+                fg = self.theme_manager.get_color('text')
+            elif self.style == 'ghost':
+                bg = self.theme_manager.get_color('primary_light') if self.hover else 'transparent'
+                fg = self.theme_manager.get_color('primary')
+            else:
+                bg = self.theme_manager.get_color('surface')
+                fg = self.theme_manager.get_color('text')
+        else:
+            bg = '#007aff' if self.style == 'primary' else '#ffffff'
+            fg = '#ffffff' if self.style == 'primary' else '#1d1d1f'
+        
+        if self.style != 'ghost':
+            self.configure(bg=bg, highlightthickness=0)
+            self.create_rectangle(0, 0, self.winfo_width(), self.winfo_height(), 
+                                  fill=bg, outline='', tags='bg')
+        
+        font = self.theme_manager.get_font('body') if self.theme_manager else ('Arial', 12)
+        self.create_text(self.winfo_width() / 2, self.winfo_height() / 2, 
+                        text=self.text, fill=fg, font=font, tags='text')
+    
+    def on_enter(self, event):
+        self.hover = True
+        self.draw()
+    
+    def on_leave(self, event):
+        self.hover = False
+        self.draw()
+    
+    def on_press(self, event):
+        self.pressed = True
+        self.draw()
+    
+    def on_release(self, event):
+        self.pressed = False
+        self.draw()
+        if self.command:
+            self.command()
 
 
 class CryptoGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("加密工具 - Crypto Tool")
-        self.root.geometry("1200x800")
-        self.root.minsize(900, 600)
+        self.root.geometry("1400x900")
+        self.root.minsize(1100, 750)
         
-        self.style = MacOSStyle()
+        self.theme_manager = ThemeManager()
         self.tool = CryptoTool()
         
         self.method_mapping = {
@@ -68,6 +281,18 @@ class CryptoGUI:
             "Railfence密码": "railfence",
             "A1Z26": "a1z26",
             "Playfair密码": "playfair",
+            "Beaufort密码": "beaufort",
+            "Porta密码": "porta",
+            "Autokey密码": "autokey",
+            "Bifid密码": "bifid",
+            "Four-Square密码": "four",
+            "Gronsfeld密码": "gronsfeld",
+            "Keyword密码": "keyword",
+            "Running Key密码": "runkey",
+            "Simple密码": "simple",
+            "Columnar密码": "columnar",
+            "ADFGX密码": "adfgx",
+            "ADFGVX密码": "adfgvx",
             "现代加密": None,
             "AES加密": "aes",
             "DES加密": "des",
@@ -81,12 +306,7 @@ class CryptoGUI:
             "其他编码": None,
             "XXencode": "xxencode",
             "UUencode": "uuencode",
-            "JSfuck": "jsfuck",
             "Brainfuck": "brainfuck",
-            "Bubble编码": "bubble",
-            "AAencode": "aaencode",
-            "JJencode": "jjencode",
-            "PPencode": "ppencode",
             "进制转换": None,
             "二进制": "binary",
             "八进制": "octal",
@@ -106,6 +326,7 @@ class CryptoGUI:
             'vigenere': {'type': 'text', 'label': '密钥', 'default': ''},
             'affine': {'type': 'affine', 'label': '参数', 'default': '5,8'},
             'playfair': {'type': 'text', 'label': '密钥', 'default': ''},
+            'railfence': {'type': 'integer', 'label': '栅栏数', 'default': 3, 'min': 2, 'max': 10},
             'beaufort': {'type': 'text', 'label': '密钥', 'default': ''},
             'porta': {'type': 'text', 'label': '密钥', 'default': ''},
             'autokey': {'type': 'text', 'label': '密钥', 'default': ''},
@@ -116,257 +337,738 @@ class CryptoGUI:
             'runkey': {'type': 'text', 'label': '密钥', 'default': ''},
             'simple': {'type': 'text', 'label': '密钥', 'default': ''},
             'columnar': {'type': 'text', 'label': '密钥', 'default': ''},
-            'aes': {'type': 'aes', 'label': '密钥', 'default': ''},
-            'des': {'type': 'des', 'label': '密钥', 'default': ''},
-            '3des': {'type': '3des', 'label': '密钥', 'default': ''},
+            'aes': {'type': 'aes', 'label': '密钥', 'default': '', 'key_length': [16, 24, 32], 'mode': 'ECB', 'padding': 'PKCS7'},
+            'des': {'type': 'des', 'label': '密钥', 'default': '', 'key_length': 8, 'mode': 'ECB', 'padding': 'PKCS7'},
+            '3des': {'type': '3des', 'label': '密钥', 'default': '', 'key_length': [16, 24], 'mode': 'ECB', 'padding': 'PKCS7'},
             'rc4': {'type': 'text', 'label': '密钥', 'default': ''}
         }
         
-        self.setup_styles()
         self.setup_ui()
-        
-    def setup_styles(self):
-        style = ttk.Style()
-        style.theme_use('clam')
-        
-        style.configure('TFrame', background=self.style.colors['background'])
-        style.configure('Card.TFrame', background=self.style.colors['card'], relief='flat')
-        style.configure('TNotebook', background=self.style.colors['background'], borderwidth=0)
-        style.configure('TNotebook.Tab', 
-                       background=self.style.colors['background'],
-                       foreground=self.style.colors['text_secondary'],
-                       padding=[20, 10],
-                       borderwidth=0)
-        style.map('TNotebook.Tab',
-                 background=[('selected', self.style.colors['card'])],
-                 foreground=[('selected', self.style.colors['text'])])
-        
-        style.configure('TLabel', 
-                       background=self.style.colors['card'],
-                       foreground=self.style.colors['text'],
-                       font=self.style.fonts['body'])
-        style.configure('Heading.TLabel', 
-                       background=self.style.colors['card'],
-                       foreground=self.style.colors['text'],
-                       font=self.style.fonts['heading'])
-        style.configure('Secondary.TLabel', 
-                       background=self.style.colors['card'],
-                       foreground=self.style.colors['text_secondary'],
-                       font=self.style.fonts['small'])
-        
-        style.configure('TButton',
-                       background=self.style.colors['accent'],
-                       foreground='white',
-                       borderwidth=0,
-                       relief='flat',
-                       padding=[15, 8],
-                       font=self.style.fonts['body'])
-        style.map('TButton',
-                 background=[('active', self.style.colors['accent_hover'])])
-        
-        style.configure('Secondary.TButton',
-                       background=self.style.colors['background'],
-                       foreground=self.style.colors['text'],
-                       borderwidth=1,
-                       relief='solid',
-                       padding=[15, 8],
-                       font=self.style.fonts['body'])
-        
-        style.configure('TCombobox',
-                       fieldbackground=self.style.colors['card'],
-                       background=self.style.colors['card'],
-                       borderwidth=1,
-                       relief='solid',
-                       padding=[10, 5])
-        
-        style.configure('TEntry',
-                       fieldbackground=self.style.colors['card'],
-                       background=self.style.colors['card'],
-                       borderwidth=1,
-                       relief='solid',
-                       padding=[10, 5])
-        
-        style.configure('TProgressbar',
-                       background=self.style.colors['accent'],
-                       troughcolor=self.style.colors['background'],
-                       borderwidth=0,
-                       thickness=3)
-        
-    def create_card(self, parent, padding=20):
-        card = ttk.Frame(parent, style='Card.TFrame', padding=padding)
-        return card
+        self.apply_theme()
         
     def setup_ui(self):
-        main_container = ttk.Frame(self.root, style='TFrame')
-        main_container.pack(fill='both', expand=True)
+        self.main_container = tk.Frame(self.root)
+        self.main_container.pack(fill='both', expand=True)
         
-        notebook = ttk.Notebook(main_container, style='TNotebook')
-        notebook.pack(fill='both', expand=True, padx=30, pady=30)
+        self.setup_header()
+        self.setup_content()
         
-        self.encrypt_tab = ttk.Frame(notebook, style='TFrame')
-        self.detect_tab = ttk.Frame(notebook, style='TFrame')
-        self.help_tab = ttk.Frame(notebook, style='TFrame')
+    def setup_header(self):
+        self.header = tk.Frame(self.main_container, height=60)
+        self.header.pack(fill='x', side='top')
+        self.header.pack_propagate(False)
         
-        notebook.add(self.encrypt_tab, text='  加解密  ')
-        notebook.add(self.detect_tab, text='  自动检测  ')
-        notebook.add(self.help_tab, text='  算法说明  ')
+        self.header_left = tk.Frame(self.header)
+        self.header_left.pack(side='left', padx=30, pady=15)
         
+        self.title_label = tk.Label(
+            self.header_left,
+            text="🔐 Crypto Tool",
+            font=self.theme_manager.get_font('title'),
+            fg=self.theme_manager.get_color('text'),
+            bg=self.theme_manager.get_color('background')
+        )
+        self.title_label.pack(side='left')
+        
+        self.header_right = tk.Frame(self.header)
+        self.header_right.pack(side='right', padx=30, pady=15)
+        
+        self.github_button = tk.Button(
+            self.header_right,
+            text="📦 GitHub",
+            command=self.open_github,
+            font=self.theme_manager.get_font('body'),
+            bg=self.theme_manager.get_color('surface'),
+            fg=self.theme_manager.get_color('text'),
+            relief='flat',
+            padx=15,
+            pady=8,
+            cursor='hand2'
+        )
+        self.github_button.pack(side='left', padx=(0, 10))
+        
+        self.theme_button = tk.Button(
+            self.header_right,
+            text="🌙",
+            command=self.toggle_theme,
+            font=self.theme_manager.get_font('body'),
+            bg=self.theme_manager.get_color('surface'),
+            fg=self.theme_manager.get_color('text'),
+            relief='flat',
+            padx=15,
+            pady=8,
+            cursor='hand2'
+        )
+        self.theme_button.pack(side='left')
+        
+    def setup_content(self):
+        self.content_frame = tk.Frame(self.main_container)
+        self.content_frame.pack(fill='both', expand=True, padx=30, pady=(0, 30))
+        
+        self.setup_tabs()
+        
+    def setup_tabs(self):
+        self.tab_frame = tk.Frame(self.content_frame, height=50)
+        self.tab_frame.pack(fill='x', side='top')
+        self.tab_frame.pack_propagate(False)
+        
+        self.tabs = []
+        self.tab_contents = []
+        
+        tab_names = ['加解密', '自动检测', '算法说明']
+        for i, name in enumerate(tab_names):
+            tab = tk.Button(
+                self.tab_frame,
+                text=name,
+                command=lambda idx=i: self.switch_tab(idx),
+                font=self.theme_manager.get_font('body_bold'),
+                bg=self.theme_manager.get_color('background'),
+                fg=self.theme_manager.get_color('text_secondary'),
+                relief='flat',
+                padx=20,
+                pady=12,
+                cursor='hand2'
+            )
+            tab.pack(side='left', padx=(0, 5))
+            self.tabs.append(tab)
+            
+            content = tk.Frame(self.content_frame)
+            content.pack(fill='both', expand=True)
+            content.pack_forget()
+            self.tab_contents.append(content)
+        
+        self.current_tab = 0
         self.setup_encrypt_tab()
         self.setup_detect_tab()
         self.setup_help_tab()
         
+        self.switch_tab(0)
+        
+    def switch_tab(self, index):
+        for i, tab in enumerate(self.tabs):
+            if i == index:
+                tab.config(
+                    fg=self.theme_manager.get_color('primary'),
+                    bg=self.theme_manager.get_color('background')
+                )
+                self.tab_contents[i].pack(fill='both', expand=True)
+            else:
+                tab.config(
+                    fg=self.theme_manager.get_color('text_secondary'),
+                    bg=self.theme_manager.get_color('background')
+                )
+                self.tab_contents[i].pack_forget()
+        
+        self.current_tab = index
+        
     def setup_encrypt_tab(self):
-        main_frame = ttk.Frame(self.encrypt_tab, style='TFrame')
-        main_frame.pack(fill='both', expand=True, padx=20, pady=20)
+        tab = self.tab_contents[0]
         
-        card = self.create_card(main_frame)
-        card.pack(fill='both', expand=True)
+        main_frame = tk.Frame(tab, bg=self.theme_manager.get_color('background'))
+        main_frame.pack(fill='both', expand=True)
         
-        ttk.Label(card, text="选择加密/解密方式", style='Heading.TLabel').pack(anchor='w', pady=(0, 10))
+        top_section = tk.Frame(main_frame, bg=self.theme_manager.get_color('background'))
+        top_section.pack(fill='x', pady=(0, 20))
+        
+        card = tk.Frame(
+            top_section,
+            bg=self.theme_manager.get_color('card'),
+            relief='flat',
+            bd=1
+        )
+        card.pack(fill='x', padx=0, pady=0)
+        
+        inner_frame = tk.Frame(card, bg=self.theme_manager.get_color('card'))
+        inner_frame.pack(fill='x', padx=20, pady=20)
+        
+        tk.Label(
+            inner_frame,
+            text="选择加密/解密方式",
+            font=self.theme_manager.get_font('heading'),
+            fg=self.theme_manager.get_color('text'),
+            bg=self.theme_manager.get_color('card')
+        ).pack(anchor='w', pady=(0, 10))
         
         self.method_var = tk.StringVar()
-        method_frame = ttk.Frame(card, style='Card.TFrame')
-        method_frame.pack(fill='x', pady=(0, 15))
-        
-        self.method_combo = ttk.Combobox(method_frame, textvariable=self.method_var, state='readonly', font=self.style.fonts['body'])
-        self.method_combo.pack(side='left', fill='x', expand=True)
+        self.method_combo = ttk.Combobox(
+            inner_frame,
+            textvariable=self.method_var,
+            state='readonly',
+            font=self.theme_manager.get_font('body'),
+            width=20
+        )
         self.method_combo.bind('<<ComboboxSelected>>', self.on_method_changed)
         
         self.load_methods()
         
-        self.key_frame = ttk.Frame(card, style='Card.TFrame')
-        self.key_frame.pack(fill='x', pady=(0, 15))
+        options_frame = tk.Frame(inner_frame, bg=self.theme_manager.get_color('card'))
+        options_frame.pack(fill='x', pady=(0, 0))
         
-        self.key_label = ttk.Label(self.key_frame, text="密钥:", style='TLabel')
-        self.key_label.pack(anchor='w', pady=(0, 5))
+        method_row = tk.Frame(options_frame, bg=self.theme_manager.get_color('card'))
+        method_row.pack(fill='x', pady=(0, 10))
         
-        self.key_entry = ttk.Entry(self.key_frame, font=self.style.fonts['body'])
-        self.key_entry.pack(fill='x')
+        method_label = tk.Label(
+            method_row,
+            text="方式",
+            font=self.theme_manager.get_font('body'),
+            fg=self.theme_manager.get_color('text'),
+            bg=self.theme_manager.get_color('card')
+        )
+        method_label.pack(side='left', padx=(0, 5))
+        self.method_combo.pack(side='left', padx=(0, 20))
         
-        self.key_info_label = ttk.Label(self.key_frame, text="", style='Secondary.TLabel')
-        self.key_info_label.pack(anchor='w', pady=(5, 0))
+        key_row = tk.Frame(options_frame, bg=self.theme_manager.get_color('card'))
+        key_row.pack(fill='x')
         
-        self.key_frame.pack_forget()
+        self.key_label = tk.Label(
+            key_row,
+            text="🔑",
+            font=self.theme_manager.get_font('body_bold'),
+            fg=self.theme_manager.get_color('text'),
+            bg=self.theme_manager.get_color('card')
+        )
+        self.key_label.pack(side='left', padx=(0, 5))
         
-        ttk.Label(card, text="输入文本", style='Heading.TLabel').pack(anchor='w', pady=(10, 5))
+        self.key_entry = tk.Entry(
+            key_row,
+            font=self.theme_manager.get_font('body'),
+            bg=self.theme_manager.get_color('input_bg'),
+            fg=self.theme_manager.get_color('text'),
+            insertbackground=self.theme_manager.get_color('primary'),
+            relief='solid',
+            bd=1,
+            highlightbackground=self.theme_manager.get_color('primary'),
+            highlightcolor=self.theme_manager.get_color('primary'),
+            highlightthickness=1,
+            width=15
+        )
+        self.key_entry.pack(side='left', padx=(0, 10))
         
-        self.input_text = scrolledtext.ScrolledText(card, height=10, wrap=tk.WORD, 
-                                                   font=self.style.fonts['code'],
-                                                   bg=self.style.colors['background'],
-                                                   fg=self.style.colors['text'],
-                                                   insertbackground=self.style.colors['accent'],
-                                                   relief='flat',
-                                                   padx=15, pady=15)
-        self.input_text.pack(fill='both', expand=True, pady=(0, 15))
+        self.key_info_label = tk.Label(
+            key_row,
+            text="",
+            font=self.theme_manager.get_font('small'),
+            fg=self.theme_manager.get_color('text_secondary'),
+            bg=self.theme_manager.get_color('card')
+        )
+        self.key_info_label.pack(side='left', padx=(0, 10))
         
-        button_frame = ttk.Frame(card, style='Card.TFrame')
+        self.iv_label = tk.Label(
+            key_row,
+            text="偏移量",
+            font=self.theme_manager.get_font('body'),
+            fg=self.theme_manager.get_color('text'),
+            bg=self.theme_manager.get_color('card')
+        )
+        
+        self.iv_entry = tk.Entry(
+            key_row,
+            font=self.theme_manager.get_font('body'),
+            bg=self.theme_manager.get_color('input_bg'),
+            fg=self.theme_manager.get_color('text'),
+            insertbackground=self.theme_manager.get_color('primary'),
+            relief='solid',
+            bd=1,
+            highlightbackground=self.theme_manager.get_color('primary'),
+            highlightcolor=self.theme_manager.get_color('primary'),
+            highlightthickness=1,
+            width=20
+        )
+        
+        self.mode_label = tk.Label(
+            key_row,
+            text="模式",
+            font=self.theme_manager.get_font('body'),
+            fg=self.theme_manager.get_color('text'),
+            bg=self.theme_manager.get_color('card')
+        )
+        
+        self.mode_var = tk.StringVar(value='ECB')
+        self.mode_combo = ttk.Combobox(
+            key_row,
+            textvariable=self.mode_var,
+            values=['ECB', 'CBC', 'CFB', 'OFB', 'CTR', 'GCM'],
+            state='readonly',
+            font=self.theme_manager.get_font('body'),
+            width=8
+        )
+        
+        self.padding_label = tk.Label(
+            key_row,
+            text="填充",
+            font=self.theme_manager.get_font('body'),
+            fg=self.theme_manager.get_color('text'),
+            bg=self.theme_manager.get_color('card')
+        )
+        
+        self.padding_var = tk.StringVar(value='PKCS7')
+        self.padding_combo = ttk.Combobox(
+            key_row,
+            textvariable=self.padding_var,
+            values=['PKCS7', 'ISO7816', 'ISO10126', 'X923', 'Zero'],
+            state='readonly',
+            font=self.theme_manager.get_font('body'),
+            width=8
+        )
+        
+        self.output_format_label = tk.Label(
+            key_row,
+            text="编码",
+            font=self.theme_manager.get_font('body'),
+            fg=self.theme_manager.get_color('text'),
+            bg=self.theme_manager.get_color('card')
+        )
+        
+        self.output_format_var = tk.StringVar(value='Base64')
+        self.output_format_combo = ttk.Combobox(
+            key_row,
+            textvariable=self.output_format_var,
+            values=['Base64', 'Hex'],
+            state='readonly',
+            font=self.theme_manager.get_font('body'),
+            width=8
+        )
+        
+        middle_section = tk.Frame(main_frame, bg=self.theme_manager.get_color('background'))
+        middle_section.pack(fill='both', expand=True)
+        
+        input_card = tk.Frame(
+            middle_section,
+            bg=self.theme_manager.get_color('card'),
+            relief='flat',
+            bd=1
+        )
+        input_card.pack(fill='both', expand=True, pady=(0, 15))
+        
+        input_inner = tk.Frame(input_card, bg=self.theme_manager.get_color('card'))
+        input_inner.pack(fill='both', expand=True, padx=20, pady=20)
+        
+        tk.Label(
+            input_inner,
+            text="输入文本",
+            font=self.theme_manager.get_font('heading'),
+            fg=self.theme_manager.get_color('text'),
+            bg=self.theme_manager.get_color('card')
+        ).pack(anchor='w', pady=(0, 10))
+        
+        self.input_text = scrolledtext.ScrolledText(
+            input_inner,
+            height=8,
+            wrap=tk.WORD,
+            font=self.theme_manager.get_font('code'),
+            bg=self.theme_manager.get_color('input_bg'),
+            fg=self.theme_manager.get_color('text'),
+            insertbackground=self.theme_manager.get_color('primary'),
+            relief='flat',
+            padx=15,
+            pady=15
+        )
+        self.input_text.pack(fill='both', expand=True)
+        
+        button_frame = tk.Frame(middle_section, bg=self.theme_manager.get_color('background'))
         button_frame.pack(fill='x', pady=(0, 15))
         
-        ttk.Button(button_frame, text="加密", command=self.encrypt_text, style='TButton').pack(side='left', padx=(0, 10))
-        ttk.Button(button_frame, text="解密", command=self.decrypt_text, style='TButton').pack(side='left', padx=(0, 10))
-        ttk.Button(button_frame, text="清空", command=self.clear_encrypt, style='Secondary.TButton').pack(side='left', padx=(0, 10))
-        ttk.Button(button_frame, text="复制结果", command=self.copy_result, style='Secondary.TButton').pack(side='right')
+        self.encrypt_button = tk.Button(
+            button_frame,
+            text="🔒 加密",
+            command=self.encrypt_text,
+            font=self.theme_manager.get_font('body_bold'),
+            bg=self.theme_manager.get_color('primary'),
+            fg='white',
+            relief='flat',
+            padx=25,
+            pady=10,
+            cursor='hand2'
+        )
+        self.encrypt_button.pack(side='left', padx=(0, 10))
         
-        ttk.Label(card, text="结果", style='Heading.TLabel').pack(anchor='w', pady=(10, 5))
+        self.decrypt_button = tk.Button(
+            button_frame,
+            text="🔓 解密",
+            command=self.decrypt_text,
+            font=self.theme_manager.get_font('body_bold'),
+            bg=self.theme_manager.get_color('primary'),
+            fg='white',
+            relief='flat',
+            padx=25,
+            pady=10,
+            cursor='hand2'
+        )
+        self.decrypt_button.pack(side='left', padx=(0, 10))
         
-        self.output_text = scrolledtext.ScrolledText(card, height=10, wrap=tk.WORD,
-                                                    font=self.style.fonts['code'],
-                                                    bg=self.style.colors['background'],
-                                                    fg=self.style.colors['text'],
-                                                    insertbackground=self.style.colors['accent'],
-                                                    relief='flat',
-                                                    padx=15, pady=15)
+        tk.Button(
+            button_frame,
+            text="🗑️ 清空",
+            command=self.clear_encrypt,
+            font=self.theme_manager.get_font('body'),
+            bg=self.theme_manager.get_color('surface'),
+            fg=self.theme_manager.get_color('text'),
+            relief='flat',
+            padx=20,
+            pady=10,
+            cursor='hand2'
+        ).pack(side='left', padx=(0, 10))
+        
+        tk.Button(
+            button_frame,
+            text="📂 导入文件",
+            command=self.import_file,
+            font=self.theme_manager.get_font('body'),
+            bg=self.theme_manager.get_color('surface'),
+            fg=self.theme_manager.get_color('text'),
+            relief='flat',
+            padx=20,
+            pady=10,
+            cursor='hand2'
+        ).pack(side='left', padx=(0, 10))
+        
+        tk.Button(
+            button_frame,
+            text="💾 保存结果",
+            command=self.export_file,
+            font=self.theme_manager.get_font('body'),
+            bg=self.theme_manager.get_color('surface'),
+            fg=self.theme_manager.get_color('text'),
+            relief='flat',
+            padx=20,
+            pady=10,
+            cursor='hand2'
+        ).pack(side='right', padx=(10, 0))
+        
+        tk.Button(
+            button_frame,
+            text="📋 复制结果",
+            command=self.copy_result,
+            font=self.theme_manager.get_font('body'),
+            bg=self.theme_manager.get_color('surface'),
+            fg=self.theme_manager.get_color('text'),
+            relief='flat',
+            padx=20,
+            pady=10,
+            cursor='hand2'
+        ).pack(side='right')
+        
+        output_card = tk.Frame(
+            middle_section,
+            bg=self.theme_manager.get_color('card'),
+            relief='flat',
+            bd=1
+        )
+        output_card.pack(fill='both', expand=True)
+        
+        output_inner = tk.Frame(output_card, bg=self.theme_manager.get_color('card'))
+        output_inner.pack(fill='both', expand=True, padx=20, pady=20)
+        
+        self.status_label = tk.Label(
+            output_inner,
+            text="就绪",
+            font=self.theme_manager.get_font('small'),
+            fg=self.theme_manager.get_color('text_secondary'),
+            bg=self.theme_manager.get_color('card')
+        )
+        self.status_label.pack(anchor='w', pady=(0, 10))
+        
+        tk.Label(
+            output_inner,
+            text="结果",
+            font=self.theme_manager.get_font('heading'),
+            fg=self.theme_manager.get_color('text'),
+            bg=self.theme_manager.get_color('card')
+        ).pack(anchor='w', pady=(0, 10))
+        
+        self.output_text = scrolledtext.ScrolledText(
+            output_inner,
+            height=8,
+            wrap=tk.WORD,
+            font=self.theme_manager.get_font('code'),
+            bg=self.theme_manager.get_color('input_bg'),
+            fg=self.theme_manager.get_color('text'),
+            insertbackground=self.theme_manager.get_color('primary'),
+            relief='flat',
+            padx=15,
+            pady=15
+        )
         self.output_text.pack(fill='both', expand=True)
         
     def setup_detect_tab(self):
-        main_frame = ttk.Frame(self.detect_tab, style='TFrame')
-        main_frame.pack(fill='both', expand=True, padx=20, pady=20)
+        tab = self.tab_contents[1]
         
-        card = self.create_card(main_frame)
-        card.pack(fill='both', expand=True)
+        main_frame = tk.Frame(tab, bg=self.theme_manager.get_color('background'))
+        main_frame.pack(fill='both', expand=True)
         
-        ttk.Label(card, text="输入密文", style='Heading.TLabel').pack(anchor='w', pady=(0, 10))
+        top_section = tk.Frame(main_frame, bg=self.theme_manager.get_color('background'))
+        top_section.pack(fill='x', pady=(0, 15))
         
-        self.detect_input = scrolledtext.ScrolledText(card, height=8, wrap=tk.WORD,
-                                                      font=self.style.fonts['code'],
-                                                      bg=self.style.colors['background'],
-                                                      fg=self.style.colors['text'],
-                                                      insertbackground=self.style.colors['accent'],
-                                                      relief='flat',
-                                                      padx=15, pady=15)
-        self.detect_input.pack(fill='both', expand=True, pady=(0, 15))
+        card = tk.Frame(
+            top_section,
+            bg=self.theme_manager.get_color('card'),
+            relief='flat',
+            bd=1
+        )
+        card.pack(fill='x', padx=0, pady=0)
         
-        button_frame = ttk.Frame(card, style='Card.TFrame')
-        button_frame.pack(fill='x', pady=(0, 15))
+        inner_frame = tk.Frame(card, bg=self.theme_manager.get_color('card'))
+        inner_frame.pack(fill='x', padx=20, pady=20)
         
-        ttk.Button(button_frame, text="自动检测加密方式", command=self.detect_encryption, style='TButton').pack(side='left', padx=(0, 10))
-        ttk.Button(button_frame, text="清空", command=self.clear_detect, style='Secondary.TButton').pack(side='left')
+        tk.Label(
+            inner_frame,
+            text="输入密文",
+            font=self.theme_manager.get_font('heading'),
+            fg=self.theme_manager.get_color('text'),
+            bg=self.theme_manager.get_color('card')
+        ).pack(anchor='w', pady=(0, 10))
         
-        ttk.Label(card, text="检测结果", style='Heading.TLabel').pack(anchor='w', pady=(10, 5))
+        self.detect_input = scrolledtext.ScrolledText(
+            inner_frame,
+            height=5,
+            wrap=tk.WORD,
+            font=self.theme_manager.get_font('code'),
+            bg=self.theme_manager.get_color('input_bg'),
+            fg=self.theme_manager.get_color('text'),
+            insertbackground=self.theme_manager.get_color('primary'),
+            relief='flat',
+            padx=15,
+            pady=15
+        )
+        self.detect_input.pack(fill='both', expand=True)
         
-        self.detect_output = scrolledtext.ScrolledText(card, height=12, wrap=tk.WORD,
-                                                       font=self.style.fonts['code'],
-                                                       bg=self.style.colors['background'],
-                                                       fg=self.style.colors['text'],
-                                                       insertbackground=self.style.colors['accent'],
-                                                       relief='flat',
-                                                       padx=15, pady=15)
-        self.detect_output.pack(fill='both', expand=True, pady=(0, 15))
+        button_frame = tk.Frame(inner_frame, bg=self.theme_manager.get_color('card'))
+        button_frame.pack(fill='x', pady=(15, 0))
         
-        ttk.Label(card, text="密钥输入（可选）", style='Heading.TLabel').pack(anchor='w', pady=(10, 5))
+        tk.Button(
+            button_frame,
+            text="🔍 自动检测加密方式",
+            command=self.detect_encryption,
+            font=self.theme_manager.get_font('body_bold'),
+            bg=self.theme_manager.get_color('primary'),
+            fg='white',
+            relief='flat',
+            padx=25,
+            pady=10,
+            cursor='hand2'
+        ).pack(side='left', padx=(0, 10))
         
-        detect_key_frame = ttk.Frame(card, style='Card.TFrame')
-        detect_key_frame.pack(fill='x', pady=(0, 15))
+        tk.Button(
+            button_frame,
+            text="🗑️ 清空",
+            command=self.clear_detect,
+            font=self.theme_manager.get_font('body'),
+            bg=self.theme_manager.get_color('surface'),
+            fg=self.theme_manager.get_color('text'),
+            relief='flat',
+            padx=20,
+            pady=10,
+            cursor='hand2'
+        ).pack(side='left')
         
-        self.detect_key_label = ttk.Label(detect_key_frame, text="密钥/移位值:", style='TLabel')
-        self.detect_key_label.pack(anchor='w', pady=(0, 5))
+        middle_section = tk.Frame(main_frame, bg=self.theme_manager.get_color('background'))
+        middle_section.pack(fill='x', pady=(0, 15))
         
-        self.detect_key_entry = ttk.Entry(detect_key_frame, font=self.style.fonts['body'])
-        self.detect_key_entry.pack(fill='x', pady=(0, 5))
+        key_card = tk.Frame(
+            middle_section,
+            bg=self.theme_manager.get_color('card'),
+            relief='flat',
+            bd=1
+        )
+        key_card.pack(fill='x', padx=0, pady=0)
         
-        self.detect_key_info_label = ttk.Label(detect_key_frame, 
-                                                text="提示: 如果填写了密钥，将尝试所有需要密钥的解密方式；如果不填写，只尝试不需要密钥的解密方式。", 
-                                                style='Secondary.TLabel')
-        self.detect_key_info_label.pack(anchor='w', pady=(5, 0))
+        key_inner = tk.Frame(key_card, bg=self.theme_manager.get_color('card'))
+        key_inner.pack(fill='x', padx=20, pady=20)
         
-        detect_button_frame = ttk.Frame(card, style='Card.TFrame')
-        detect_button_frame.pack(fill='x', pady=(0, 15))
+        tk.Label(
+            key_inner,
+            text="🔑 密钥输入（可选）",
+            font=self.theme_manager.get_font('heading'),
+            fg=self.theme_manager.get_color('text'),
+            bg=self.theme_manager.get_color('card')
+        ).pack(anchor='w', pady=(0, 10))
         
-        ttk.Button(detect_button_frame, text="复制结果", command=self.copy_detect_result, style='Secondary.TButton').pack(side='left')
+        self.detect_key_entry = tk.Entry(
+            key_inner,
+            font=self.theme_manager.get_font('body'),
+            bg=self.theme_manager.get_color('input_bg'),
+            fg=self.theme_manager.get_color('text'),
+            insertbackground=self.theme_manager.get_color('primary'),
+            relief='solid',
+            bd=1,
+            highlightbackground=self.theme_manager.get_color('primary'),
+            highlightcolor=self.theme_manager.get_color('primary'),
+            highlightthickness=1,
+            width=25
+        )
+        self.detect_key_entry.pack(anchor='w', pady=(0, 5))
         
-        progress_frame = ttk.Frame(card, style='Card.TFrame')
+        tk.Label(
+            key_inner,
+            text="💡 提示: 如果填写了密钥，将尝试所有需要密钥的解密方式；如果不填写，只尝试不需要密钥的解密方式。",
+            font=self.theme_manager.get_font('small'),
+            fg=self.theme_manager.get_color('text_secondary'),
+            bg=self.theme_manager.get_color('card'),
+            wraplength=800
+        ).pack(anchor='w', pady=(5, 0))
+        
+        bottom_section = tk.Frame(main_frame, bg=self.theme_manager.get_color('background'))
+        bottom_section.pack(fill='both', expand=True)
+        
+        output_card = tk.Frame(
+            bottom_section,
+            bg=self.theme_manager.get_color('card'),
+            relief='flat',
+            bd=1
+        )
+        output_card.pack(fill='both', expand=True, padx=0, pady=0)
+        
+        output_inner = tk.Frame(output_card, bg=self.theme_manager.get_color('card'))
+        output_inner.pack(fill='both', expand=True, padx=20, pady=20)
+        
+        tk.Label(
+            output_inner,
+            text="检测结果",
+            font=self.theme_manager.get_font('heading'),
+            fg=self.theme_manager.get_color('text'),
+            bg=self.theme_manager.get_color('card')
+        ).pack(anchor='w', pady=(0, 10))
+        
+        self.detect_output = scrolledtext.ScrolledText(
+            output_inner,
+            height=12,
+            wrap=tk.WORD,
+            font=self.theme_manager.get_font('code'),
+            bg=self.theme_manager.get_color('input_bg'),
+            fg=self.theme_manager.get_color('text'),
+            insertbackground=self.theme_manager.get_color('primary'),
+            relief='flat',
+            padx=15,
+            pady=15
+        )
+        self.detect_output.pack(fill='both', expand=True)
+        
+        output_button_frame = tk.Frame(output_inner, bg=self.theme_manager.get_color('card'))
+        output_button_frame.pack(fill='x', pady=(15, 0))
+        
+        tk.Button(
+            output_button_frame,
+            text="📋 复制结果",
+            command=self.copy_detect_result,
+            font=self.theme_manager.get_font('body'),
+            bg=self.theme_manager.get_color('surface'),
+            fg=self.theme_manager.get_color('text'),
+            relief='flat',
+            padx=20,
+            pady=10,
+            cursor='hand2'
+        ).pack(side='left')
+        
+        progress_frame = tk.Frame(output_inner, bg=self.theme_manager.get_color('card'))
         progress_frame.pack(fill='x', pady=(15, 0))
         
-        self.progress = ttk.Progressbar(progress_frame, mode='indeterminate', style='TProgressbar')
+        self.progress = ttk.Progressbar(progress_frame, mode='indeterminate')
         self.progress.pack(fill='x')
         
-        self.status_label = ttk.Label(progress_frame, text="就绪", style='Secondary.TLabel')
+        self.status_label = tk.Label(
+            progress_frame,
+            text="就绪",
+            font=self.theme_manager.get_font('small'),
+            fg=self.theme_manager.get_color('text_secondary'),
+            bg=self.theme_manager.get_color('card')
+        )
         self.status_label.pack(pady=(8, 0))
         
     def setup_help_tab(self):
-        main_frame = ttk.Frame(self.help_tab, style='TFrame')
-        main_frame.pack(fill='both', expand=True, padx=20, pady=20)
+        tab = self.tab_contents[2]
         
-        card = self.create_card(main_frame)
-        card.pack(fill='both', expand=True)
+        main_frame = tk.Frame(tab, bg=self.theme_manager.get_color('background'))
+        main_frame.pack(fill='both', expand=True)
         
-        search_frame = ttk.Frame(card, style='Card.TFrame')
-        search_frame.pack(fill='x', pady=(0, 15))
+        top_section = tk.Frame(main_frame, bg=self.theme_manager.get_color('background'))
+        top_section.pack(fill='x', pady=(0, 20))
         
-        ttk.Label(search_frame, text="搜索:", style='TLabel').pack(side='left', padx=(0, 10))
+        card = tk.Frame(
+            top_section,
+            bg=self.theme_manager.get_color('card'),
+            relief='flat',
+            bd=1
+        )
+        card.pack(fill='x', padx=0, pady=0)
+        
+        inner_frame = tk.Frame(card, bg=self.theme_manager.get_color('card'))
+        inner_frame.pack(fill='x', padx=20, pady=20)
+        
+        search_frame = tk.Frame(inner_frame, bg=self.theme_manager.get_color('card'))
+        search_frame.pack(fill='x')
+        
+        tk.Label(
+            search_frame,
+            text="🔍",
+            font=self.theme_manager.get_font('body'),
+            fg=self.theme_manager.get_color('text_secondary'),
+            bg=self.theme_manager.get_color('card')
+        ).pack(side='left', padx=(0, 10))
+        
         self.search_var = tk.StringVar()
-        search_entry = ttk.Entry(search_frame, textvariable=self.search_var, font=self.style.fonts['body'])
+        search_entry = tk.Entry(
+            search_frame,
+            textvariable=self.search_var,
+            font=self.theme_manager.get_font('body'),
+            bg=self.theme_manager.get_color('input_bg'),
+            fg=self.theme_manager.get_color('text'),
+            insertbackground=self.theme_manager.get_color('primary'),
+            relief='solid',
+            bd=1
+        )
         search_entry.pack(side='left', fill='x', expand=True, padx=(0, 10))
-        ttk.Button(search_frame, text="搜索", command=self.search_algorithms, style='TButton').pack(side='left', padx=(0, 10))
-        ttk.Button(search_frame, text="显示全部", command=self.show_all_algorithms, style='Secondary.TButton').pack(side='left')
         
-        self.help_text = scrolledtext.ScrolledText(card, wrap=tk.WORD,
-                                                   font=self.style.fonts['body'],
-                                                   bg=self.style.colors['background'],
-                                                   fg=self.style.colors['text'],
-                                                   insertbackground=self.style.colors['accent'],
-                                                   relief='flat',
-                                                   padx=20, pady=20)
+        tk.Button(
+            search_frame,
+            text="搜索",
+            command=self.search_algorithms,
+            font=self.theme_manager.get_font('body'),
+            bg=self.theme_manager.get_color('primary'),
+            fg='white',
+            relief='flat',
+            padx=20,
+            pady=8,
+            cursor='hand2'
+        ).pack(side='left', padx=(0, 10))
+        
+        tk.Button(
+            search_frame,
+            text="显示全部",
+            command=self.show_all_algorithms,
+            font=self.theme_manager.get_font('body'),
+            bg=self.theme_manager.get_color('surface'),
+            fg=self.theme_manager.get_color('text'),
+            relief='flat',
+            padx=20,
+            pady=8,
+            cursor='hand2'
+        ).pack(side='left')
+        
+        bottom_section = tk.Frame(main_frame, bg=self.theme_manager.get_color('background'))
+        bottom_section.pack(fill='both', expand=True)
+        
+        help_card = tk.Frame(
+            bottom_section,
+            bg=self.theme_manager.get_color('card'),
+            relief='flat',
+            bd=1
+        )
+        help_card.pack(fill='both', expand=True)
+        
+        help_inner = tk.Frame(help_card, bg=self.theme_manager.get_color('card'))
+        help_inner.pack(fill='both', expand=True, padx=20, pady=20)
+        
+        self.help_text = scrolledtext.ScrolledText(
+            help_inner,
+            wrap=tk.WORD,
+            font=self.theme_manager.get_font('body'),
+            bg=self.theme_manager.get_color('input_bg'),
+            fg=self.theme_manager.get_color('text'),
+            insertbackground=self.theme_manager.get_color('primary'),
+            relief='flat',
+            padx=20,
+            pady=20
+        )
         self.help_text.pack(fill='both', expand=True)
         
         self.show_all_algorithms()
@@ -382,13 +1084,15 @@ class CryptoGUI:
             "古典密码",
             "Caesar密码", "Vigenère密码", "ROT13", "Atbash密码",
             "Affine密码", "Railfence密码", "A1Z26", "Playfair密码",
+            "Beaufort密码", "Porta密码", "Autokey密码", "Bifid密码",
+            "Four-Square密码", "Gronsfeld密码", "Keyword密码", "Running Key密码",
+            "Simple密码", "Columnar密码", "ADFGX密码", "ADFGVX密码",
             "现代加密",
             "AES加密", "DES加密", "3DES加密", "RC4加密",
             "特殊编码",
             "Morse密码", "Tapcode", "猪圈密码", "Baconian密码",
             "其他编码",
-            "XXencode", "UUencode", "JSfuck", "Brainfuck",
-            "Bubble编码", "AAencode", "JJencode", "PPencode",
+            "XXencode", "UUencode", "Brainfuck",
             "进制转换",
             "二进制", "八进制", "十进制", "十六进制",
             "哈希函数",
@@ -404,14 +1108,20 @@ class CryptoGUI:
         method = self.method_mapping.get(method_display)
         
         if method in self.key_requirements:
-            self.key_frame.pack(fill='x', pady=(0, 15), after=self.method_combo.master)
             req = self.key_requirements[method]
-            self.key_label.config(text=f"{req['label']}:")
+            self.key_label.config(text=f"🔑 {req['label']}:")
             
             if req['type'] == 'shift':
                 self.key_info_label.config(text="请输入移位值（整数）")
+                self.hide_advanced_options()
             elif req['type'] == 'affine':
                 self.key_info_label.config(text="请输入a,b参数（例如：5,8）")
+                self.hide_advanced_options()
+            elif req['type'] == 'integer':
+                min_val = req.get('min', 2)
+                max_val = req.get('max', 10)
+                self.key_info_label.config(text=f"请输入{req['label']}（{min_val}-{max_val}）")
+                self.hide_advanced_options()
             elif req['type'] in ['aes', 'des', '3des']:
                 if req['type'] == 'aes':
                     self.key_info_label.config(text="请输入密钥（16/24/32字节）")
@@ -419,357 +1129,419 @@ class CryptoGUI:
                     self.key_info_label.config(text="请输入密钥（8字节）")
                 elif req['type'] == '3des':
                     self.key_info_label.config(text="请输入密钥（16/24字节）")
+                self.show_advanced_options()
             else:
                 self.key_info_label.config(text="请输入密钥文本")
+                self.hide_advanced_options()
         else:
-            self.key_frame.pack_forget()
+            self.key_label.config(text="🔑 密钥 / 偏移位")
+            self.key_info_label.config(text="此加密方式不需要密钥或偏移位")
+            self.key_entry.delete(0, tk.END)
+            self.hide_advanced_options()
+        
+        hash_methods = ['md5', 'sha1', 'sha256', 'sha384', 'sha512', 'ripemd160']
+        if method in hash_methods:
+            self.decrypt_button.config(state='disabled', bg=self.theme_manager.get_color('text_disabled'))
+        else:
+            self.decrypt_button.config(state='normal', bg=self.theme_manager.get_color('primary'))
+    
+    def show_advanced_options(self):
+        self.iv_label.pack(side='left', padx=(0, 5))
+        self.iv_entry.pack(side='left', padx=(0, 10))
+        self.mode_label.pack(side='left', padx=(0, 5))
+        self.mode_combo.pack(side='left', padx=(0, 10))
+        self.padding_label.pack(side='left', padx=(0, 5))
+        self.padding_combo.pack(side='left', padx=(0, 10))
+        self.output_format_label.pack(side='left', padx=(0, 5))
+        self.output_format_combo.pack(side='left')
+    
+    def hide_advanced_options(self):
+        self.iv_label.pack_forget()
+        self.iv_entry.pack_forget()
+        self.mode_label.pack_forget()
+        self.mode_combo.pack_forget()
+        self.padding_label.pack_forget()
+        self.padding_combo.pack_forget()
+        self.output_format_label.pack_forget()
+        self.output_format_combo.pack_forget()
             
     def get_key_params(self, method):
         if method not in self.key_requirements:
             return {}
         
         req = self.key_requirements[method]
-        key_value = self.key_entry.get().strip()
+        key_text = self.key_entry.get().strip()
+        iv_text = self.iv_entry.get().strip() if hasattr(self, 'iv_entry') else ''
+        mode = self.mode_var.get() if hasattr(self, 'mode_var') else 'ECB'
+        padding = self.padding_var.get() if hasattr(self, 'padding_var') else 'PKCS7'
+        output_format = self.output_format_var.get().lower() if hasattr(self, 'output_format_var') else 'base64'
+        
+        params = {}
         
         if req['type'] == 'shift':
             try:
-                shift = int(key_value) if key_value else req['default']
-                return {'shift': shift}
+                params['shift'] = int(key_text)
             except ValueError:
-                return {'shift': req['default']}
-        elif req['type'] == 'affine':
+                params['shift'] = req['default']
+        elif req['type'] == 'integer':
             try:
-                parts = key_value.split(',')
-                if len(parts) == 2:
-                    a = int(parts[0].strip())
-                    b = int(parts[1].strip())
-                    return {'a': a, 'b': b}
-                else:
-                    default_parts = req['default'].split(',')
-                    return {'a': int(default_parts[0]), 'b': int(default_parts[1])}
+                value = int(key_text)
+                min_val = req.get('min', 2)
+                max_val = req.get('max', 10)
+                if value < min_val or value > max_val:
+                    value = req['default']
+                params['rails'] = value
             except ValueError:
-                default_parts = req['default'].split(',')
-                return {'a': int(default_parts[0]), 'b': int(default_parts[1])}
-        elif req['type'] in ['aes', 'des', '3des']:
-            return {'key': key_value if key_value else req['default']}
+                params['rails'] = req['default']
+        elif req['type'] == 'affine':
+            parts = key_text.split(',')
+            if len(parts) == 2:
+                try:
+                    params['a'] = int(parts[0])
+                    params['b'] = int(parts[1])
+                except ValueError:
+                    pass
+            params['a'] = 5
+            params['b'] = 8
         else:
-            return {'key': key_value if key_value else req['default']}
-            
+            params['key'] = key_text
+        
+        if method in ['aes', 'des', '3des']:
+            if iv_text:
+                params['iv'] = iv_text
+            params['mode'] = mode
+            params['padding'] = padding
+            params['output_format'] = output_format
+        
+        return params
+    
     def encrypt_text(self):
         method_display = self.method_var.get()
-        text = self.input_text.get("1.0", tk.END).strip()
+        method = self.method_mapping.get(method_display)
         
+        if not method:
+            messagebox.showerror("错误", "请选择一个具体的加密方式！")
+            return
+        
+        text = self.input_text.get("1.0", tk.END).strip()
         if not text:
             messagebox.showwarning("警告", "请输入要加密的文本！")
             return
-            
-        if not method_display:
-            messagebox.showwarning("警告", "请选择加密方式！")
-            return
         
-        method = self.method_mapping.get(method_display)
-        if method is None:
-            messagebox.showwarning("警告", "请选择一个具体的加密方式，而不是分类！")
-            return
-        
-        key_params = self.get_key_params(method)
-            
         try:
-            result = self.tool.encrypt(method, text, **key_params)
+            self.status_label.config(text="正在加密...", fg=self.theme_manager.get_color('text_secondary'))
+            self.root.update()
+            
+            params = self.get_key_params(method)
+            result = self.tool.encrypt(method, text, **params)
             self.output_text.delete("1.0", tk.END)
             self.output_text.insert("1.0", result)
+            self.status_label.config(text="✅ 加密成功", fg=self.theme_manager.get_color('success'))
+        except ValueError as e:
+            ErrorDialog(self.root, "加密参数错误", str(e), 
+                      "请检查密钥、偏移量等参数是否正确。", 'warning')
+            self.status_label.config(text="❌ 加密失败", fg=self.theme_manager.get_color('error'))
         except Exception as e:
-            messagebox.showerror("错误", f"加密失败: {str(e)}")
-            
+            ErrorDialog(self.root, "加密失败", str(e), 
+                      "请检查输入文本和加密方式是否正确，或尝试其他加密方式。")
+            self.status_label.config(text="❌ 加密失败", fg=self.theme_manager.get_color('error'))
+    
     def decrypt_text(self):
         method_display = self.method_var.get()
-        text = self.input_text.get("1.0", tk.END).strip()
+        method = self.method_mapping.get(method_display)
         
+        if not method:
+            messagebox.showerror("错误", "请选择一个具体的解密方式！")
+            return
+        
+        text = self.input_text.get("1.0", tk.END).strip()
         if not text:
             messagebox.showwarning("警告", "请输入要解密的文本！")
             return
-            
-        if not method_display:
-            messagebox.showwarning("警告", "请选择解密方式！")
-            return
         
-        method = self.method_mapping.get(method_display)
-        if method is None:
-            messagebox.showwarning("警告", "请选择一个具体的解密方式，而不是分类！")
-            return
-        
-        key_params = self.get_key_params(method)
-            
         try:
-            result = self.tool.decrypt(method, text, **key_params)
+            self.status_label.config(text="正在解密...", fg=self.theme_manager.get_color('text_secondary'))
+            self.root.update()
+            
+            params = self.get_key_params(method)
+            result = self.tool.decrypt(method, text, **params)
             self.output_text.delete("1.0", tk.END)
             self.output_text.insert("1.0", result)
+            self.status_label.config(text="✅ 解密成功", fg=self.theme_manager.get_color('success'))
+        except ValueError as e:
+            ErrorDialog(self.root, "解密参数错误", str(e), 
+                      "请检查密钥、偏移量等参数是否正确。", 'warning')
+            self.status_label.config(text="❌ 解密失败", fg=self.theme_manager.get_color('error'))
         except Exception as e:
-            messagebox.showerror("错误", f"解密失败: {str(e)}")
-            
+            ErrorDialog(self.root, "解密失败", str(e), 
+                      "请检查密文和密钥是否正确，或尝试其他解密方式。")
+            self.status_label.config(text="❌ 解密失败", fg=self.theme_manager.get_color('error'))
+    
     def clear_encrypt(self):
         self.input_text.delete("1.0", tk.END)
         self.output_text.delete("1.0", tk.END)
         self.key_entry.delete(0, tk.END)
+    
+    def import_file(self):
+        from tkinter import filedialog
         
+        filetypes = [
+            ('文本文件', '*.txt'),
+            ('所有文件', '*.*')
+        ]
+        filename = filedialog.askopenfilename(
+            title="选择要导入的文件",
+            filetypes=filetypes
+        )
+        
+        if filename:
+            try:
+                with open(filename, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                self.input_text.delete("1.0", tk.END)
+                self.input_text.insert("1.0", content)
+                messagebox.showinfo("成功", f"已成功导入文件：{filename}")
+            except UnicodeDecodeError:
+                try:
+                    with open(filename, 'r', encoding='gbk') as f:
+                        content = f.read()
+                    self.input_text.delete("1.0", tk.END)
+                    self.input_text.insert("1.0", content)
+                    messagebox.showinfo("成功", f"已成功导入文件（GBK编码）：{filename}")
+                except Exception as e:
+                    ErrorDialog(self.root, "无法读取文件", str(e), 
+                              "请确保文件格式正确，或尝试使用其他编码打开文件。")
+            except Exception as e:
+                ErrorDialog(self.root, "导入文件失败", str(e), 
+                              "请检查文件是否存在，或尝试其他文件。")
+    
+    def export_file(self):
+        from tkinter import filedialog
+        
+        result = self.output_text.get("1.0", tk.END).strip()
+        if not result:
+            messagebox.showwarning("警告", "没有可保存的内容！")
+            return
+        
+        filetypes = [
+            ('文本文件', '*.txt'),
+            ('所有文件', '*.*')
+        ]
+        filename = filedialog.asksaveasfilename(
+            title="保存结果",
+            defaultextension=".txt",
+            filetypes=filetypes
+        )
+        
+        if filename:
+            try:
+                with open(filename, 'w', encoding='utf-8') as f:
+                    f.write(result)
+                messagebox.showinfo("成功", f"已成功保存到文件：{filename}")
+            except Exception as e:
+                ErrorDialog(self.root, "保存文件失败", str(e), 
+                              "请检查是否有写入权限，或尝试保存到其他位置。")
+    
     def copy_result(self):
         result = self.output_text.get("1.0", tk.END).strip()
         if result:
             self.root.clipboard_clear()
             self.root.clipboard_append(result)
             messagebox.showinfo("成功", "结果已复制到剪贴板！")
-            
+        else:
+            messagebox.showwarning("警告", "没有可复制的内容！")
+    
     def detect_encryption(self):
-        text = self.detect_input.get("1.0", tk.END).strip()
-        
-        if not text:
+        ciphertext = self.detect_input.get("1.0", tk.END).strip()
+        if not ciphertext:
             messagebox.showwarning("警告", "请输入要检测的密文！")
             return
-            
-        key = self.detect_key_entry.get().strip()
         
-        self.detect_output.delete("1.0", tk.END)
-        self.progress.start()
-        self.status_label.config(text="正在检测...")
+        key = self.detect_key_entry.get().strip()
         
         def detect_thread():
             try:
-                results = self.tool.auto_detect(text, key)
+                self.root.after(0, lambda: self.progress.start(10))
+                self.root.after(0, lambda: self.status_label.config(text="正在检测..."))
                 
-                self.root.after(0, self.display_detect_results, results)
+                results = self.tool.auto_detect(ciphertext, key)
+                
+                self.root.after(0, lambda: self.progress.stop())
+                
+                if results:
+                    output = "检测到以下可能的加密方式:\n\n"
+                    for i, (method, name, result) in enumerate(results, 1):
+                        output += f"{i}. {name}\n"
+                        output += f"   解密结果: {result[:100]}{'...' if len(result) > 100 else ''}\n\n"
+                    
+                    self.root.after(0, lambda: self.detect_output.delete("1.0", tk.END))
+                    self.root.after(0, lambda: self.detect_output.insert("1.0", output))
+                    self.root.after(0, lambda: self.status_label.config(text=f"检测完成，找到 {len(results)} 种可能"))
+                else:
+                    self.root.after(0, lambda: self.detect_output.delete("1.0", tk.END))
+                    self.root.after(0, lambda: self.detect_output.insert("1.0", "未检测到已知的加密方式"))
+                    self.root.after(0, lambda: self.status_label.config(text="检测完成，未找到匹配"))
+                    
             except Exception as e:
-                self.root.after(0, lambda: self.display_detect_error(str(e)))
-                
+                self.root.after(0, lambda: self.progress.stop())
+                self.root.after(0, lambda: self.status_label.config(text="检测失败"))
+                self.root.after(0, lambda: messagebox.showerror("错误", f"检测失败: {str(e)}"))
+        
         thread = threading.Thread(target=detect_thread)
         thread.daemon = True
         thread.start()
-        
-    def display_detect_results(self, results):
-        self.progress.stop()
-        self.status_label.config(text="检测完成")
-        
-        self.detect_output.delete("1.0", tk.END)
-        self.detect_output.insert("1.0", "=" * 80 + "\n\n")
-        
-        if not results:
-            self.detect_output.insert(tk.END, "未检测到已知的加密方式。\n\n")
-            self.detect_output.insert(tk.END, "提示: 请确保输入的是完整的密文，某些加密方式需要特定的格式。\n")
-        else:
-            self.detect_output.insert(tk.END, f"检测到 {len(results)} 种可能的加密方式:\n\n")
-            
-            for i, (method, name, result) in enumerate(results, 1):
-                self.detect_output.insert(tk.END, f"{i}. {name} ({method})\n")
-                self.detect_output.insert(tk.END, f"   解密结果: {result}\n\n")
-                
-        self.detect_output.insert(tk.END, "\n" + "=" * 80 + "\n")
-        
-    def display_detect_error(self, error_msg):
-        self.progress.stop()
-        self.status_label.config(text="检测失败")
-        self.detect_output.insert("1.0", f"检测过程中发生错误: {error_msg}\n")
-        
+    
     def clear_detect(self):
         self.detect_input.delete("1.0", tk.END)
         self.detect_output.delete("1.0", tk.END)
-        self.status_label.config(text="就绪")
-        
-    def show_all_algorithms(self):
-        self.help_text.delete("1.0", tk.END)
-        
-        help_content = """
-加密工具算法说明
-==================
-
-一、Base 编码系列
-------------------
-Base16: 将二进制数据转换为16进制表示
-Base32: 使用32个字符进行编码（A-Z, 2-7）
-Base36: 使用0-9和A-Z进行编码
-Base58: 去除易混淆字符的Base编码（0, O, I, l等）
-Base62: 使用0-9, A-Z, a-z进行编码
-Base64: 最常用的Base编码，使用64个字符
-Base85: 使用85个字符进行编码，比Base64更紧凑
-Base91: 使用91个可打印ASCII字符进行编码
-Base92: 使用92个可打印ASCII字符进行编码
-
-二、编码转换
-------------------
-Hex: 十六进制编码
-URL编码: 将特殊字符转换为%XX格式
-HTML编码: 将特殊字符转换为HTML实体
-Escape编码: 类似于URL编码，用于JavaScript
-ASCII编码: 将字符转换为ASCII码
-Quoted编码: 使用=XX格式进行编码
-
-三、古典密码
-------------------
-Caesar密码: 凯撒密码，字母表移位加密（需要移位值）
-Vigenère密码: 维吉尼亚密码，使用密钥进行多表替换（需要密钥）
-ROT13: 凯撒密码的特例，移位13位
-Atbash密码: 希伯来字母表反转密码
-Affine密码: 仿射密码，使用线性函数加密（需要a,b参数）
-Railfence密码: 栅栏密码，按之字形排列
-A1Z26: 将字母转换为数字（A=1, B=2, ..., Z=26）
-Playfair密码: 普莱费尔密码，使用5x5矩阵进行双字母替换（需要密钥）
-
-四、现代加密
-------------------
-AES加密: 高级加密标准，支持128/192/256位密钥（需要密钥）
-DES加密: 数据加密标准，使用56位密钥（需要密钥）
-3DES加密: 三重DES加密，更安全（需要密钥）
-RC4加密: 流密码算法（需要密钥）
-
-五、特殊编码
-------------------
-Morse密码: 摩尔斯电码，使用点和划表示
-Tapcode: 敲击码，用于监狱通信
-猪圈密码: 使用几何图形表示字母
-Baconian密码: 培根密码，使用A/B两种字母表示
-
-六、其他编码
-------------------
-XXencode: 类似于Base64的编码方式
-UUencode: Unix-to-Unix编码
-JSfuck: 仅使用6个字符的JavaScript混淆编码
-Brainfuck: 极简主义编程语言编码
-Bubble编码: 使用气泡图形表示
-AAencode: 使用颜文字进行编码
-JJencode: 使用JavaScript语法混淆
-PPencode: 使用Perl语法混淆
-
-七、进制转换
-------------------
-二进制: 0和1表示
-八进制: 0-7表示
-十进制: 0-9表示
-十六进制: 0-9和A-F表示
-
-八、哈希函数
-------------------
-MD5: 128位哈希值
-SHA1: 160位哈希值
-SHA256: 256位哈希值
-SHA384: 384位哈希值
-SHA512: 512位哈希值
-RIPEMD160: 160位哈希值
-
-注意: 哈希函数是单向的，只能加密不能解密。
-"""
-        
-        self.help_text.insert("1.0", help_content)
-        
-    def search_algorithms(self):
-        search_term = self.search_var.get().lower().strip()
-        
-        if not search_term:
-            self.show_all_algorithms()
-            return
-            
-        self.help_text.delete("1.0", tk.END)
-        
-        all_content = """
-加密工具算法说明
-==================
-
-一、Base 编码系列
-------------------
-Base16: 将二进制数据转换为16进制表示
-Base32: 使用32个字符进行编码（A-Z, 2-7）
-Base36: 使用0-9和A-Z进行编码
-Base58: 去除易混淆字符的Base编码（0, O, I, l等）
-Base62: 使用0-9, A-Z, a-z进行编码
-Base64: 最常用的Base编码，使用64个字符
-Base85: 使用85个字符进行编码，比Base64更紧凑
-Base91: 使用91个可打印ASCII字符进行编码
-Base92: 使用92个可打印ASCII字符进行编码
-
-二、编码转换
-------------------
-Hex: 十六进制编码
-URL编码: 将特殊字符转换为%XX格式
-HTML编码: 将特殊字符转换为HTML实体
-Escape编码: 类似于URL编码，用于JavaScript
-ASCII编码: 将字符转换为ASCII码
-Quoted编码: 使用=XX格式进行编码
-
-三、古典密码
-------------------
-Caesar密码: 凯撒密码，字母表移位加密（需要移位值）
-Vigenère密码: 维吉尼亚密码，使用密钥进行多表替换（需要密钥）
-ROT13: 凯撒密码的特例，移位13位
-Atbash密码: 希伯来字母表反转密码
-Affine密码: 仿射密码，使用线性函数加密（需要a,b参数）
-Railfence密码: 栅栏密码，按之字形排列
-A1Z26: 将字母转换为数字（A=1, B=2, ..., Z=26）
-Playfair密码: 普莱费尔密码，使用5x5矩阵进行双字母替换（需要密钥）
-
-四、现代加密
-------------------
-AES加密: 高级加密标准，支持128/192/256位密钥（需要密钥）
-DES加密: 数据加密标准，使用56位密钥（需要密钥）
-3DES加密: 三重DES加密，更安全（需要密钥）
-RC4加密: 流密码算法（需要密钥）
-
-五、特殊编码
-------------------
-Morse密码: 摩尔斯电码，使用点和划表示
-Tapcode: 敲击码，用于监狱通信
-猪圈密码: 使用几何图形表示字母
-Baconian密码: 培根密码，使用A/B两种字母表示
-
-六、其他编码
-------------------
-XXencode: 类似于Base64的编码方式
-UUencode: Unix-to-Unix编码
-JSfuck: 仅使用6个字符的JavaScript混淆编码
-Brainfuck: 极简主义编程语言编码
-Bubble编码: 使用气泡图形表示
-AAencode: 使用颜文字进行编码
-JJencode: 使用JavaScript语法混淆
-PPencode: 使用Perl语法混淆
-
-七、进制转换
-------------------
-二进制: 0和1表示
-八进制: 0-7表示
-十进制: 0-9表示
-十六进制: 0-9和A-F表示
-
-八、哈希函数
-------------------
-MD5: 128位哈希值
-SHA1: 160位哈希值
-SHA256: 256位哈希值
-SHA384: 384位哈希值
-SHA512: 512位哈希值
-RIPEMD160: 160位哈希值
-
-注意: 哈希函数是单向的，只能加密不能解密。
-"""
-        
-        lines = all_content.split('\n')
-        filtered_lines = []
-        
-        for line in lines:
-            if search_term in line.lower():
-                filtered_lines.append(line)
-                
-        if filtered_lines:
-            self.help_text.insert("1.0", "搜索结果:\n")
-            self.help_text.insert(tk.END, "=" * 80 + "\n\n")
-            for line in filtered_lines:
-                self.help_text.insert(tk.END, line + "\n")
-        else:
-            self.help_text.insert("1.0", f"未找到包含 '{search_term}' 的算法。\n")
-            self.help_text.insert(tk.END, "\n请尝试其他关键词。")
+        self.detect_key_entry.delete(0, tk.END)
     
     def copy_detect_result(self):
-        """复制检测结果"""
         result = self.detect_output.get("1.0", tk.END).strip()
         if result:
             self.root.clipboard_clear()
             self.root.clipboard_append(result)
             messagebox.showinfo("成功", "结果已复制到剪贴板！")
+        else:
+            messagebox.showwarning("警告", "没有可复制的内容！")
+    
+    def search_algorithms(self):
+        query = self.search_var.get().strip().lower()
+        if not query:
+            self.show_all_algorithms()
+            return
+        
+        self.help_text.delete("1.0", tk.END)
+        
+        algorithm_info = self.tool.get_algorithm_info()
+        
+        found = False
+        for name, info in algorithm_info.items():
+            if query in name.lower() or query in info.lower():
+                self.help_text.insert(tk.END, f"【{name}】\n{info}\n\n")
+                found = True
+        
+        if not found:
+            self.help_text.insert(tk.END, f"未找到与 '{query}' 相关的算法。")
+    
+    def show_all_algorithms(self):
+        self.help_text.delete("1.0", tk.END)
+        
+        algorithm_info = self.tool.get_algorithm_info()
+        
+        categories = {
+            'Base 编码': ['Base16', 'Base32', 'Base36', 'Base58', 'Base62', 'Base64', 'Base85', 'Base91', 'Base92'],
+            '编码转换': ['Hex', 'URL编码', 'HTML编码', 'Escape编码', 'ASCII编码', 'Quoted编码'],
+            '古典密码': ['Caesar密码', 'Vigenère密码', 'ROT13', 'Atbash密码', 'Affine密码', 'Railfence密码', 'A1Z26', 'Playfair密码', 
+                        'Beaufort密码', 'Porta密码', 'Autokey密码', 'Bifid密码', 'Four-Square密码', 'Gronsfeld密码', 
+                        'Keyword密码', 'Running Key密码', 'Simple密码', 'Columnar密码', 'ADFGX密码', 'ADFGVX密码'],
+            '现代加密': ['AES加密', 'DES加密', '3DES加密', 'RC4加密'],
+            '特殊编码': ['Morse密码', 'Tapcode', '猪圈密码', 'Baconian密码'],
+            '其他编码': ['XXencode', 'UUencode', 'Brainfuck'],
+            '进制转换': ['二进制', '八进制', '十进制', '十六进制'],
+            '哈希函数': ['MD5', 'SHA1', 'SHA256', 'SHA384', 'SHA512', 'RIPEMD160']
+        }
+        
+        for category, algorithms in categories.items():
+            self.help_text.insert(tk.END, f"\n{'='*50}\n")
+            self.help_text.insert(tk.END, f"【{category}】\n")
+            self.help_text.insert(tk.END, f"{'='*50}\n\n")
+            
+            for alg in algorithms:
+                if alg in algorithm_info:
+                    self.help_text.insert(tk.END, f"【{alg}】\n{algorithm_info[alg]}\n\n")
+    
+    def open_github(self):
+        webbrowser.open('https://github.com/qwerasdzx-123/crypto_gui')
+    
+    def toggle_theme(self):
+        new_theme = self.theme_manager.toggle_theme()
+        self.apply_theme()
+        
+        if new_theme == 'dark':
+            self.theme_button.config(text="☀️")
+        else:
+            self.theme_button.config(text="🌙")
+    
+    def apply_theme(self):
+        bg = self.theme_manager.get_color('background')
+        surface = self.theme_manager.get_color('surface')
+        card = self.theme_manager.get_color('card')
+        text = self.theme_manager.get_color('text')
+        text_secondary = self.theme_manager.get_color('text_secondary')
+        primary = self.theme_manager.get_color('primary')
+        input_bg = self.theme_manager.get_color('input_bg')
+        
+        self.main_container.config(bg=bg)
+        self.header.config(bg=bg)
+        self.header_left.config(bg=bg)
+        self.header_right.config(bg=bg)
+        self.title_label.config(bg=bg, fg=text)
+        self.github_button.config(bg=surface, fg=text)
+        self.theme_button.config(bg=surface, fg=text)
+        
+        self.tab_frame.config(bg=bg)
+        for tab in self.tabs:
+            tab.config(bg=bg, fg=text_secondary)
+        
+        for content in self.tab_contents:
+            content.config(bg=bg)
+        
+        self._apply_theme_recursive(self.main_container)
+    
+    def _apply_theme_recursive(self, widget):
+        bg = self.theme_manager.get_color('background')
+        card = self.theme_manager.get_color('card')
+        text = self.theme_manager.get_color('text')
+        text_secondary = self.theme_manager.get_color('text_secondary')
+        primary = self.theme_manager.get_color('primary')
+        input_bg = self.theme_manager.get_color('input_bg')
+        
+        if isinstance(widget, tk.Frame):
+            try:
+                widget.config(bg=bg)
+            except:
+                pass
+        
+        for child in widget.winfo_children():
+            if isinstance(child, tk.Frame):
+                try:
+                    child.config(bg=bg)
+                except:
+                    pass
+            elif isinstance(child, tk.Label):
+                try:
+                    if 'title' in str(child):
+                        child.config(bg=bg, fg=text)
+                    elif 'heading' in str(child):
+                        child.config(bg=card, fg=text)
+                    elif 'info' in str(child) or 'status' in str(child):
+                        child.config(bg=card, fg=text_secondary)
+                    else:
+                        child.config(bg=bg, fg=text)
+                except:
+                    pass
+            elif isinstance(child, tk.Entry):
+                try:
+                    child.config(bg=input_bg, fg=text, insertbackground=primary)
+                except:
+                    pass
+            elif isinstance(child, tk.Button):
+                try:
+                    if child != self.github_button and child != self.theme_button:
+                        child.config(bg=primary, fg='white')
+                except:
+                    pass
+            elif isinstance(child, scrolledtext.ScrolledText):
+                try:
+                    child.config(bg=input_bg, fg=text, insertbackground=primary)
+                except:
+                    pass
+            
+            try:
+                self._apply_theme_recursive(child)
+            except:
+                pass
 
 
 def main():

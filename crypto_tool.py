@@ -65,6 +65,66 @@ class CryptoTool:
             }
         }
     
+    def get_algorithm_info(self) -> Dict[str, str]:
+        return {
+            'Base16': 'Base16编码是一种将二进制数据转换为16进制字符的编码方式，使用0-9和A-F字符。',
+            'Base32': 'Base32编码是一种将二进制数据转换为32进制字符的编码方式，使用A-Z和2-7字符。',
+            'Base36': 'Base36编码是一种将二进制数据转换为36进制字符的编码方式，使用0-9和A-Z字符。',
+            'Base58': 'Base58编码是一种用于比特币地址的编码方式，去除了容易混淆的字符。',
+            'Base62': 'Base62编码是一种将二进制数据转换为62进制字符的编码方式，使用0-9、A-Z和a-z字符。',
+            'Base64': 'Base64编码是一种将二进制数据转换为64进制字符的编码方式，使用A-Z、a-z、0-9和+、/字符。',
+            'Base85': 'Base85编码是一种将二进制数据转换为85进制字符的编码方式，比Base64更高效。',
+            'Base91': 'Base91编码是一种将二进制数据转换为91进制字符的编码方式，使用ASCII可打印字符。',
+            'Base92': 'Base92编码是一种将二进制数据转换为92进制字符的编码方式。',
+            'Hex': 'Hex编码（十六进制）将每个字节转换为两个十六进制字符。',
+            'URL编码': 'URL编码将特殊字符转换为%XX格式，用于在URL中传输。',
+            'HTML编码': 'HTML编码将特殊字符转换为HTML实体，如&变为&amp;。',
+            'Escape编码': 'Escape编码将特殊字符转换为转义序列。',
+            'ASCII编码': 'ASCII编码将字符转换为ASCII码数值。',
+            'Quoted编码': 'Quoted-printable编码用于电子邮件，将非ASCII字符转换为=XX格式。',
+            'Caesar密码': 'Caesar密码是一种简单的替换密码，将字母表中的每个字母移动固定位数。',
+            'Vigenère密码': 'Vigenère密码是一种多表替换密码，使用关键词进行加密。',
+            'ROT13': 'ROT13是Caesar密码的一种特殊形式，将字母移动13位。',
+            'Atbash密码': 'Atbash密码是一种替换密码，将字母表反转。',
+            'Affine密码': 'Affine密码是一种使用数学函数的替换密码，公式为E(x) = (ax + b) mod 26。',
+            'Railfence密码': 'Railfence密码是一种换位密码，将文本按锯齿形排列后按行读取。',
+            'A1Z26': 'A1Z26密码将字母转换为对应的数字，A=1, B=2, ..., Z=26。',
+            'Playfair密码': 'Playfair密码是一种使用5x5矩阵的双字母替换密码。',
+            'Beaufort密码': 'Beaufort密码是一种多表替换密码，类似于Vigenère密码但使用不同的加密方式。',
+            'Porta密码': 'Porta密码是一种多表替换密码，使用关键词进行加密。',
+            'Autokey密码': 'Autokey密码是一种使用密钥和明文本身作为密钥的密码。',
+            'Bifid密码': 'Bifid密码是一种使用Polybius方阵的替换密码。',
+            'Four-Square密码': 'Four-Square密码是一种使用四个5x5矩阵的替换密码。',
+            'Gronsfeld密码': 'Gronsfeld密码是一种使用数字密钥的变体Vigenère密码。',
+            'Keyword密码': 'Keyword密码是一种使用关键词创建替换表的替换密码。',
+            'Running Key密码': 'Running Key密码是一种使用长密钥（如书籍文本）的密码。',
+            'Simple密码': 'Simple密码是一种简单的替换密码，使用关键词创建替换表。',
+            'Columnar密码': 'Columnar密码是一种换位密码，将文本按列排列后按行读取。',
+            'ADFGX密码': 'ADFGX密码是一种使用5x5方阵和ADFGX字母的替换密码。',
+            'ADFGVX密码': 'ADFGVX密码是一种使用6x6方阵和ADFGVX字母的替换密码。',
+            'AES加密': 'AES（高级加密标准）是一种对称加密算法，支持128、192、256位密钥。',
+            'DES加密': 'DES（数据加密标准）是一种对称加密算法，使用56位密钥。',
+            '3DES加密': '3DES（三重DES）是DES的改进版本，应用三次DES加密。',
+            'RC4加密': 'RC4是一种流密码算法，虽然曾经广泛使用，但现在被认为不够安全。',
+            'Morse密码': 'Morse密码使用点和划的组合来表示字母和数字。',
+            'Tapcode': 'Tapcode是一种敲击密码，用于监狱中通过敲击传递信息。',
+            '猪圈密码': '猪圈密码是一种使用图形符号的替换密码。',
+            'Baconian密码': 'Baconian密码是一种使用A和B两种字母的替换密码。',
+            'XXencode': 'XXencode是一种将二进制数据转换为可打印ASCII字符的编码方式。',
+            'UUencode': 'UUencode是一种将二进制数据转换为可打印ASCII字符的编码方式，用于电子邮件。',
+            'Brainfuck': 'Brainfuck是一种极简主义的编程语言，也可以用于编码。',
+            '二进制': '二进制转换将数字转换为二进制表示（0和1）。',
+            '八进制': '八进制转换将数字转换为八进制表示（0-7）。',
+            '十进制': '十进制转换将数字转换为十进制表示（0-9）。',
+            '十六进制': '十六进制转换将数字转换为十六进制表示（0-9和A-F）。',
+            'MD5': 'MD5是一种哈希算法，产生128位哈希值，已不再推荐用于安全用途。',
+            'SHA1': 'SHA1是一种哈希算法，产生160位哈希值，已不再推荐用于安全用途。',
+            'SHA256': 'SHA256是一种哈希算法，产生256位哈希值，广泛用于安全应用。',
+            'SHA384': 'SHA384是一种哈希算法，产生384位哈希值。',
+            'SHA512': 'SHA512是一种哈希算法，产生512位哈希值。',
+            'RIPEMD160': 'RIPEMD160是一种哈希算法，产生160位哈希值。'
+        }
+    
     def auto_detect(self, ciphertext: str, key: str = None) -> List[Tuple[str, str, str]]:
         results = []
         
@@ -94,10 +154,13 @@ class CryptoTool:
             ('uuencode', 'UUencode编码', lambda: self.uuencode_decode(ciphertext)),
             ('html', 'HTML编码', lambda: self.html_decode(ciphertext)),
             ('quoted', 'Quoted-printable编码', lambda: self.quoted_decode(ciphertext)),
+            ('brainfuck', 'Brainfuck编码', lambda: self.brainfuck_decode(ciphertext)),
         ]
         
         for method, name, decrypt_func in all_methods:
             try:
+                if method == 'bubble' and not self._is_bubble(ciphertext):
+                    continue
                 result = decrypt_func()
                 if result and len(result) > 0:
                     results.append((method, name, result))
@@ -248,16 +311,37 @@ class CryptoTool:
                 pass
             
             try:
-                result = self.rc4_decrypt(ciphertext, key)
+                result = self.rc4_decrypt(ciphertext, key, output_format='base64')
                 if result and len(result) > 0:
                     results.append(('rc4', f'RC4加密(密钥:{key})', result))
             except:
                 pass
             
             try:
-                result = self.rc4_decrypt_openssl(ciphertext, key)
+                result = self.rc4_decrypt(ciphertext, key, output_format='hex')
+                if result and len(result) > 0:
+                    results.append(('rc4', f'RC4加密(密钥:{key},Hex格式)', result))
+            except:
+                pass
+            
+            try:
+                result = self.rc4_decrypt(ciphertext, key, output_format='plain')
+                if result and len(result) > 0:
+                    results.append(('rc4', f'RC4加密(密钥:{key},纯文本)', result))
+            except:
+                pass
+            
+            try:
+                result = self.rc4_openssl_decrypt(ciphertext, key, output_format='base64')
                 if result and len(result) > 0:
                     results.append(('rc4_openssl', f'RC4加密(OpenSSL格式,密钥:{key})', result))
+            except:
+                pass
+            
+            try:
+                result = self.rc4_openssl_decrypt(ciphertext, key, output_format='hex')
+                if result and len(result) > 0:
+                    results.append(('rc4_openssl', f'RC4加密(OpenSSL格式,密钥:{key},Hex)', result))
             except:
                 pass
         else:
@@ -359,6 +443,34 @@ class CryptoTool:
             return False
         pattern = r'^[0-9A-Fa-f]+$'
         return bool(re.match(pattern, text))
+    
+    def _is_bubble(self, text: str) -> bool:
+        if len(text) < 5:
+            return False
+        if not text.startswith('x') or not text.endswith('x'):
+            return False
+        
+        content = text[1:-1]
+        if not content:
+            return True
+        
+        parts = content.split('-')
+        
+        for i, part in enumerate(parts):
+            if len(part) == 0:
+                continue
+            
+            is_first = (i == 0)
+            is_last = (i == len(parts) - 1)
+            
+            if is_first or is_last:
+                if len(part) != 4 and len(part) != 5:
+                    return False
+            else:
+                if len(part) != 5:
+                    return False
+        
+        return True
     
     def _is_url_encoded(self, text: str) -> bool:
         return '%' in text and re.search(r'%[0-9A-Fa-f]{2}', text)
@@ -572,13 +684,15 @@ class CryptoTool:
     
     def _modern_encrypt(self, method: str, plaintext: str, key: str, **kwargs) -> str:
         method = method.lower()
-        mode = kwargs.get('mode', 'ECB')
+        mode = kwargs.get('mode', 'CBC')
         output_format = kwargs.get('output_format', 'base64')
+        iv = kwargs.get('iv', None)
+        padding = kwargs.get('padding', 'pkcs7')
         method_map = {
-            'aes': lambda: self.aes_encrypt(plaintext, key, mode, output_format),
-            'des': lambda: self.des_encrypt(plaintext, key, mode, output_format),
-            '3des': lambda: self.tdes_encrypt(plaintext, key, mode, output_format),
-            'rc4': lambda: self.rc4_encrypt_openssl(plaintext, key, output_format)
+            'aes': lambda: self.aes_encrypt(plaintext, key, mode, output_format, iv, padding),
+            'des': lambda: self.des_encrypt(plaintext, key, mode, output_format, iv, padding),
+            '3des': lambda: self.tdes_encrypt(plaintext, key, mode, output_format, iv, padding),
+            'rc4': lambda: self.rc4_openssl_encrypt(plaintext, key, output_format)
         }
         if method not in method_map:
             raise ValueError(f"不支持的现代加密: {method}")
@@ -586,13 +700,15 @@ class CryptoTool:
     
     def _modern_decrypt(self, method: str, ciphertext: str, key: str, **kwargs) -> str:
         method = method.lower()
-        mode = kwargs.get('mode', 'ECB')
+        mode = kwargs.get('mode', 'CBC')
         output_format = kwargs.get('output_format', 'base64')
+        iv = kwargs.get('iv', None)
+        padding = kwargs.get('padding', 'pkcs7')
         method_map = {
-            'aes': lambda: self.aes_decrypt(ciphertext, key, mode, output_format),
-            'des': lambda: self.des_decrypt(ciphertext, key, mode, output_format),
-            '3des': lambda: self.tdes_decrypt(ciphertext, key, mode, output_format),
-            'rc4': lambda: self.rc4_decrypt_openssl(ciphertext, key, output_format) if ciphertext.startswith('U2FsdGVkX1') else self.rc4_decrypt(ciphertext, key, output_format)
+            'aes': lambda: self.aes_decrypt(ciphertext, key, mode, output_format, iv, padding),
+            'des': lambda: self.des_decrypt(ciphertext, key, mode, output_format, iv, padding),
+            '3des': lambda: self.tdes_decrypt(ciphertext, key, mode, output_format, iv, padding),
+            'rc4': lambda: self.rc4_openssl_decrypt(ciphertext, key, output_format)
         }
         if method not in method_map:
             raise ValueError(f"不支持的现代加密: {method}")
@@ -909,35 +1025,35 @@ class CryptoTool:
     def adfgvx_decrypt(self, text: str, key: str) -> str:
         return ClassicalCiphers.adfgvx_decrypt(text, key)
 
-    def aes_encrypt(self, plaintext: str, key: str, mode: str = 'ECB', output_format: str = 'base64') -> str:
-        return ModernEncryption.aes_encrypt(plaintext, key, mode, output_format)
+    def aes_encrypt(self, plaintext: str, key: str, mode: str = 'ECB', output_format: str = 'base64', iv: str = None, padding: str = 'pkcs7') -> str:
+        return ModernEncryption.aes_encrypt(plaintext, key, mode, output_format, iv, padding)
 
-    def aes_decrypt(self, ciphertext: str, key: str, mode: str = 'ECB', output_format: str = 'base64') -> str:
-        return ModernEncryption.aes_decrypt(ciphertext, key, mode, output_format)
+    def aes_decrypt(self, ciphertext: str, key: str, mode: str = 'ECB', output_format: str = 'base64', iv: str = None, padding: str = 'pkcs7') -> str:
+        return ModernEncryption.aes_decrypt(ciphertext, key, mode, output_format, iv, padding)
 
-    def des_encrypt(self, plaintext: str, key: str, mode: str = 'ECB', output_format: str = 'base64') -> str:
-        return ModernEncryption.des_encrypt(plaintext, key, mode, output_format)
+    def des_encrypt(self, plaintext: str, key: str, mode: str = 'ECB', output_format: str = 'base64', iv: str = None, padding: str = 'pkcs7') -> str:
+        return ModernEncryption.des_encrypt(plaintext, key, mode, output_format, iv, padding)
 
-    def des_decrypt(self, ciphertext: str, key: str, mode: str = 'ECB', output_format: str = 'base64') -> str:
-        return ModernEncryption.des_decrypt(ciphertext, key, mode, output_format)
+    def des_decrypt(self, ciphertext: str, key: str, mode: str = 'ECB', output_format: str = 'base64', iv: str = None, padding: str = 'pkcs7') -> str:
+        return ModernEncryption.des_decrypt(ciphertext, key, mode, output_format, iv, padding)
 
-    def tdes_encrypt(self, plaintext: str, key: str, mode: str = 'ECB', output_format: str = 'base64') -> str:
-        return ModernEncryption.tdes_encrypt(plaintext, key, mode, output_format)
+    def tdes_encrypt(self, plaintext: str, key: str, mode: str = 'ECB', output_format: str = 'base64', iv: str = None, padding: str = 'pkcs7') -> str:
+        return ModernEncryption.tdes_encrypt(plaintext, key, mode, output_format, iv, padding)
 
-    def tdes_decrypt(self, ciphertext: str, key: str, mode: str = 'ECB', output_format: str = 'base64') -> str:
-        return ModernEncryption.tdes_decrypt(ciphertext, key, mode, output_format)
+    def tdes_decrypt(self, ciphertext: str, key: str, mode: str = 'ECB', output_format: str = 'base64', iv: str = None, padding: str = 'pkcs7') -> str:
+        return ModernEncryption.tdes_decrypt(ciphertext, key, mode, output_format, iv, padding)
 
     def rc4_encrypt(self, plaintext: str, key: str, output_format: str = 'base64') -> str:
-        return ModernEncryption.rc4_encrypt(plaintext, key, output_format)
+        return ModernEncryption.rc4_standard_encrypt(plaintext, key, output_format)
 
     def rc4_decrypt(self, ciphertext: str, key: str, output_format: str = 'base64') -> str:
-        return ModernEncryption.rc4_decrypt(ciphertext, key, output_format)
-
-    def rc4_encrypt_openssl(self, plaintext: str, key: str, output_format: str = 'base64') -> str:
-        return ModernEncryption.rc4_encrypt_openssl(plaintext, key, output_format)
-
-    def rc4_decrypt_openssl(self, ciphertext: str, key: str, output_format: str = 'base64') -> str:
-        return ModernEncryption.rc4_decrypt_openssl(ciphertext, key, output_format)
+        return ModernEncryption.rc4_standard_decrypt(ciphertext, key, output_format)
+    
+    def rc4_openssl_encrypt(self, plaintext: str, key: str, output_format: str = 'base64') -> str:
+        return ModernEncryption.rc4_openssl_encrypt(plaintext, key, output_format)
+    
+    def rc4_openssl_decrypt(self, ciphertext: str, key: str, output_format: str = 'base64') -> str:
+        return ModernEncryption.rc4_openssl_decrypt(ciphertext, key, output_format)
 
     def morse_encode(self, text: str) -> str:
         return SpecialEncoding.morse_encode(text)
